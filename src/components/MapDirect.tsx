@@ -340,6 +340,7 @@ export function MapDirect({ quartiers, onQuartierClick, selectedQuartier }: MapD
             return formatted + ' FCFA';
           };
 
+          
           const popupHTML = `
             <div class="p-3 min-w-[280px]">
               <h3 class="font-bold text-lg mb-3 text-blue-600">${quartier.nom}</h3>
