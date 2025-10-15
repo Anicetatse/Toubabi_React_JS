@@ -1,0 +1,262 @@
+// Schéma Prisma pour la base de données Toubabi
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id                BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  name              String   @db.VarChar(255)
+  email             String   @unique @db.VarChar(255)
+  email_verified_at DateTime?
+  password          String   @db.VarChar(255)
+  telephone         String?  @db.VarChar(255)
+  adresse           String?  @db.Text
+  role              String   @default("client") @db.VarChar(50)
+  remember_token    String?  @db.VarChar(100)
+  created_at        DateTime?
+  updated_at        DateTime?
+  
+  produits          produits[]
+  wishlists         wishlists[]
+  commandes         commandes[]
+  commentaires      commentaires[]
+}
+
+model pays {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom        String   @db.VarChar(255)
+  code       String?  @db.VarChar(10)
+  created_at DateTime?
+  updated_at DateTime?
+  
+  villes     villes[]
+}
+
+model villes {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom        String   @db.VarChar(255)
+  pays_id    BigInt   @db.UnsignedBigInt
+  created_at DateTime?
+  updated_at DateTime?
+  
+  pays       pays     @relation(fields: [pays_id], references: [id])
+  communes   communes[]
+  
+  @@index([pays_id])
+}
+
+model communes {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom        String   @db.VarChar(255)
+  ville_id   BigInt   @db.UnsignedBigInt
+  created_at DateTime?
+  updated_at DateTime?
+  
+  ville      villes   @relation(fields: [ville_id], references: [id])
+  quartiers  quartiers[]
+  
+  @@index([ville_id])
+}
+
+model quartiers {
+  id            BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom           String   @db.VarChar(255)
+  commune_id    BigInt   @db.UnsignedBigInt
+  prix_non_bati Decimal? @db.Decimal(15, 2)
+  prix_bati     Decimal? @db.Decimal(15, 2)
+  latitude      Decimal? @db.Decimal(10, 8)
+  longitude     Decimal? @db.Decimal(11, 8)
+  created_at    DateTime?
+  updated_at    DateTime?
+  
+  commune       communes @relation(fields: [commune_id], references: [id])
+  produits      produits[]
+  
+  @@index([commune_id])
+}
+
+model categories {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom         String   @db.VarChar(255)
+  description String?  @db.Text
+  image       String?  @db.VarChar(255)
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  souscategories souscategories[]
+  produits       produits[]
+}
+
+model souscategories {
+  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom          String   @db.VarChar(255)
+  categorie_id BigInt   @db.UnsignedBigInt
+  created_at   DateTime?
+  updated_at   DateTime?
+  
+  categorie    categories @relation(fields: [categorie_id], references: [id])
+  produits     produits[]
+  
+  @@index([categorie_id])
+}
+
+model type_annonces {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom         String   @db.VarChar(255)
+  description String?  @db.Text
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  produits    produits[]
+}
+
+model produits {
+  id                   BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  titre                String   @db.VarChar(255)
+  description          String   @db.Text
+  prix                 Decimal  @db.Decimal(15, 2)
+  surface              Decimal? @db.Decimal(10, 2)
+  nombre_pieces        Int?
+  nombre_chambres      Int?
+  nombre_salles_bain   Int?
+  categorie_id         BigInt   @db.UnsignedBigInt
+  sous_categorie_id    BigInt?  @db.UnsignedBigInt
+  type_annonce_id      BigInt   @db.UnsignedBigInt
+  quartier_id          BigInt   @db.UnsignedBigInt
+  user_id              BigInt   @db.UnsignedBigInt
+  statut               String   @default("en_attente") @db.VarChar(50)
+  caracteristiques     Json?
+  created_at           DateTime?
+  updated_at           DateTime?
+  
+  categorie            categories      @relation(fields: [categorie_id], references: [id])
+  sous_categorie       souscategories? @relation(fields: [sous_categorie_id], references: [id])
+  type_annonce         type_annonces   @relation(fields: [type_annonce_id], references: [id])
+  quartier             quartiers       @relation(fields: [quartier_id], references: [id])
+  user                 users           @relation(fields: [user_id], references: [id])
+  images               images[]
+  wishlists            wishlists[]
+  commande_details     commande_details[]
+  commentaires         commentaires[]
+  
+  @@index([categorie_id])
+  @@index([sous_categorie_id])
+  @@index([type_annonce_id])
+  @@index([quartier_id])
+  @@index([user_id])
+}
+
+model images {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  produit_id  BigInt   @db.UnsignedBigInt
+  url         String   @db.VarChar(255)
+  alt         String?  @db.VarChar(255)
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  produit     produits @relation(fields: [produit_id], references: [id], onDelete: Cascade)
+  
+  @@index([produit_id])
+}
+
+model wishlists {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id     BigInt   @db.UnsignedBigInt
+  produit_id  BigInt   @db.UnsignedBigInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  user        users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  produit     produits @relation(fields: [produit_id], references: [id], onDelete: Cascade)
+  
+  @@unique([user_id, produit_id])
+  @@index([user_id])
+  @@index([produit_id])
+}
+
+model commandes {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id     BigInt   @db.UnsignedBigInt
+  total       Decimal  @db.Decimal(15, 2)
+  statut      String   @default("en_attente") @db.VarChar(50)
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  user        users    @relation(fields: [user_id], references: [id])
+  details     commande_details[]
+  
+  @@index([user_id])
+}
+
+model commande_details {
+  id              BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  commande_id     BigInt   @db.UnsignedBigInt
+  produit_id      BigInt   @db.UnsignedBigInt
+  quantite        Int
+  prix_unitaire   Decimal  @db.Decimal(15, 2)
+  created_at      DateTime?
+  updated_at      DateTime?
+  
+  commande        commandes @relation(fields: [commande_id], references: [id], onDelete: Cascade)
+  produit         produits  @relation(fields: [produit_id], references: [id])
+  
+  @@index([commande_id])
+  @@index([produit_id])
+}
+
+model commentaires {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  contenu     String   @db.Text
+  user_id     BigInt   @db.UnsignedBigInt
+  produit_id  BigInt   @db.UnsignedBigInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  user        users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  produit     produits @relation(fields: [produit_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  @@index([produit_id])
+}
+
+model sliders {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  titre       String   @db.VarChar(255)
+  sous_titre  String?  @db.VarChar(255)
+  image       String   @db.VarChar(255)
+  lien        String?  @db.VarChar(255)
+  ordre       Int      @default(0)
+  actif       Boolean  @default(true)
+  created_at  DateTime?
+  updated_at  DateTime?
+}
+
+model contact {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom         String   @db.VarChar(255)
+  email       String   @db.VarChar(255)
+  telephone   String?  @db.VarChar(255)
+  sujet       String   @db.VarChar(255)
+  message     String   @db.Text
+  lu          Boolean  @default(false)
+  created_at  DateTime?
+  updated_at  DateTime?
+}
+
+model estimes {
+  id                BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id           BigInt?  @db.UnsignedBigInt
+  type_construction String   @db.VarChar(255)
+  surface           Decimal  @db.Decimal(10, 2)
+  nombre_etages     Int
+  finition          String   @db.VarChar(50)
+  montant_estime    Decimal  @db.Decimal(15, 2)
+  email             String?  @db.VarChar(255)
+  created_at        DateTime?
+  updated_at        DateTime?
+}
