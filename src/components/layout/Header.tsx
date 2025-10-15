@@ -22,12 +22,32 @@ export function Header() {
   const { itemsCount } = useCart();
 
   const navigation = [
-    { name: 'Accueil', href: '/' },
+    { 
+      name: 'Cartographie des prix', 
+      href: '#',
+      dropdown: [
+        { name: 'Terrains', href: '/' },
+        { name: 'Constructions', href: '/cartographie/bati' },
+        { name: 'Stats par zone', href: '/carto/stats' },
+      ]
+    },
+    { 
+      name: 'Construire', 
+      href: '#',
+      dropdown: [
+        { name: 'Généralités', href: '/construire' },
+        { name: 'Simuler mon projet de construction', href: '/estimation' },
+      ]
+    },
+    { 
+      name: 'Tout savoir', 
+      href: '#',
+      dropdown: [
+        { name: 'Les fondamentaux', href: '/tout-savoir' },
+        { name: 'Mobilité urbaine', href: '/services' },
+      ]
+    },
     { name: 'Biens disponibles', href: '/biens' },
-    { name: 'Services', href: '/services' },
-    { name: 'Tout savoir', href: '/tout-savoir' },
-    { name: 'Construire', href: '/construire' },
-    { name: 'Estimation', href: '/estimation' },
   ];
 
   const handleLogout = async () => {
@@ -48,15 +68,32 @@ export function Header() {
         {/* Menu Desktop */}
         <div className="hidden lg:flex lg:gap-x-8">
           {navigation.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`text-sm font-semibold leading-6 transition-colors hover:text-blue-600 ${
-                pathname === item.href ? 'text-blue-600' : 'text-gray-900'
-              }`}
-            >
-              {item.name}
-            </Link>
+            item.dropdown ? (
+              <DropdownMenu key={item.name}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600">
+                    {item.name}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  {item.dropdown.map((subItem) => (
+                    <DropdownMenuItem key={subItem.name} asChild>
+                      <Link href={subItem.href}>{subItem.name}</Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`text-sm font-semibold leading-6 transition-colors hover:text-blue-600 ${
+                  pathname === item.href ? 'text-blue-600' : 'text-gray-900'
+                }`}
+              >
+                {item.name}
+              </Link>
+            )
           ))}
         </div>
 
@@ -64,38 +101,21 @@ export function Header() {
         <div className="flex flex-1 items-center justify-end gap-x-3">
           {/* Recherche */}
           <Link href="/recherche">
-            <Button variant="ghost" size="icon" className="hidden sm:flex">
-              <Search className="h-5 w-5" />
-            </Button>
-          </Link>
-
-          {/* Cartographie */}
-          <Link href="/">
-            <Button variant="ghost" size="icon" className="hidden sm:flex">
-              <MapPin className="h-5 w-5" />
-            </Button>
-          </Link>
-
-          {/* Panier */}
-          <Link href="/panier">
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              {itemsCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
-                  {itemsCount}
-                </span>
-              )}
+            <Button variant="ghost" className="hidden sm:flex">
+              Rechercher
             </Button>
           </Link>
 
           {/* Wishlist */}
           {isAuthenticated && (
             <Link href="/mon-espace/wishlist">
-              <Button variant="ghost" size="icon">
-                <Heart className="h-5 w-5" />
+              <Button variant="ghost" className="hidden sm:flex">
+                <Heart className="h-4 w-4 mr-2" />
+                Mes favoris
               </Button>
             </Link>
           )}
+
 
           {/* Utilisateur */}
           {isAuthenticated ? (
@@ -137,9 +157,16 @@ export function Header() {
             </div>
           )}
 
-          {/* Bouton CTA */}
-          <Button asChild className="hidden lg:flex">
-            <Link href="/deposer-annonce">Déposer une annonce</Link>
+          {/* Contactez-nous */}
+          <Button variant="ghost" asChild className="hidden lg:flex">
+            <Link href="/contactez-nous">Contactez-nous</Link>
+          </Button>
+
+          {/* ToGes */}
+          <Button asChild className="hidden lg:flex bg-red-600 hover:bg-red-700">
+            <Link href="https://toges.toubabi.com/" target="_blank" rel="noopener noreferrer">
+              ToGes
+            </Link>
           </Button>
 
           {/* Menu Mobile */}

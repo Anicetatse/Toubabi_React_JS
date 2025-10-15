@@ -53,6 +53,11 @@ export interface Quartier {
   deleted_at?: string | null;
   created_at: string;
   updated_at: string;
+  // Champs supplémentaires utilisés par les cartes héritées du PHP
+  nbre_biens?: number;
+  nb_biens?: number;
+  nbre_location?: number;
+  nbre_vente?: number;
 }
 
 export interface Categorie {

@@ -64,20 +64,31 @@ model communes {
 }
 
 model quartiers {
-  id            BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  nom           String   @db.VarChar(255)
-  commune_id    BigInt   @db.UnsignedBigInt
-  prix_non_bati Decimal? @db.Decimal(15, 2)
-  prix_bati     Decimal? @db.Decimal(15, 2)
-  latitude      Decimal? @db.Decimal(10, 8)
-  longitude     Decimal? @db.Decimal(11, 8)
-  created_at    DateTime?
-  updated_at    DateTime?
+  id                BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  id_commune        BigInt    @db.UnsignedBigInt
+  nom               String    @db.VarChar(255)
+  images            String?   @db.LongText
+  enabled           Boolean   @default(true) @db.TinyInt
+  deleted_at        DateTime? @db.Timestamp(0)
+  created_at        DateTime? @db.Timestamp(0)
+  updated_at        DateTime? @db.Timestamp(0)
+  lng               Float?    @db.Double
+  lat               Float?    @db.Double
+  prix_min_location BigInt?
+  prix_moy_location BigInt?
+  prix_max_location BigInt?
+  prix_min_vente    BigInt?
+  prix_moy_vente    BigInt?
+  prix_max_vente    BigInt?
+  prix_venal        BigInt?
+  prix_marchand     BigInt?
+  prix_moyen        BigInt?
   
-  commune       communes @relation(fields: [commune_id], references: [id])
-  produits      produits[]
+  commune           communes  @relation(fields: [id_commune], references: [id])
+  produits          produits[]
   
-  @@index([commune_id])
+  @@index([id_commune])
+  @@map("quartiers")
 }
 
 model categories {
