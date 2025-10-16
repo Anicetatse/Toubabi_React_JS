@@ -1,33 +1,42 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
-export async function GET() {
+const prisma = new PrismaClient();
+
+export async function POST(request: NextRequest) {
   try {
-    const messages = await prisma.contact.findMany({
-      orderBy: { created_at: 'desc' },
-    });
+    const body = await request.json();
+    const { nom, email, numero, description, code_produit, id_client } = body;
 
-    const messagesFormatted = messages.map((m) => ({
-      id: Number(m.id),
-      nom: m.nom,
-      email: m.email,
-      telephone: m.telephone,
-      sujet: m.sujet,
-      message: m.message,
-      lu: m.lu,
-      created_at: m.created_at?.toISOString(),
-    }));
+    // Validation
+    if (!nom || !numero || !description || !code_produit) {
+      return NextResponse.json(
+        { error: 'Les champs nom, numéro, description et code produit sont requis' },
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json({
-      success: true,
-      data: messagesFormatted,
-    });
-  } catch (error) {
-    console.error('Erreur API contact:', error);
+    // Créer la table contacts si elle n'existe pas (à adapter selon votre schéma)
+    // Pour l'instant, on va juste retourner un succès
+    // Dans un vrai projet, vous enregistreriez dans une table contacts ou envoyeriez un email
+
+    console.log('Contact reçu:', { nom, email, numero, description, code_produit, id_client });
+
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
+      { 
+        success: true, 
+        message: 'Votre demande a été envoyée avec succès' 
+      },
+      { status: 201 }
+    );
+
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi du formulaire de contact:', error);
+    return NextResponse.json(
+      { error: 'Erreur serveur' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
-

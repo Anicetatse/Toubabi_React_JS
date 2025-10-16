@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,8 +25,10 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const redirectUrl = searchParams.get('redirect') || '/mon-espace/dashboard';
 
   const {
     register,
@@ -40,7 +42,7 @@ export default function LoginPage() {
     mutationFn: authService.login,
     onSuccess: (data) => {
       login(data.token, data.user);
-      router.push('/mon-espace/dashboard');
+      router.push(redirectUrl);
     },
     onError: (err: any) => {
       setError(err.response?.data?.message || 'Une erreur est survenue lors de la connexion');

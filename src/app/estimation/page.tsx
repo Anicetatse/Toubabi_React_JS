@@ -1,294 +1,298 @@
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Calculator, Info } from 'lucide-react';
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import { Calculator, Info, Building, MapPin } from 'lucide-react';
 
-const estimationSchema = z.object({
-  type_construction: z.string().min(1, 'Type de construction requis'),
-  surface: z.number().min(1, 'Surface requise'),
-  nombre_etages: z.number().min(1, 'Nombre d\'étages requis'),
-  finition: z.enum(['economique', 'standard', 'haut_de_gamme']),
-  email: z.string().email('Email invalide').optional(),
-});
+interface Commune {
+  id: string;
+  nom: string;
+}
 
-type EstimationForm = z.infer<typeof estimationSchema>;
+interface Quartier {
+  id: string;
+  nom: string;
+  commune_id: string;
+}
+
+interface EstimationData {
+  coefficient_occupa_sols: number;
+  hauteur: number;
+  niveau: number;
+}
 
 export default function EstimationPage() {
-  const [result, setResult] = useState<number | null>(null);
+  const [communes, setCommunes] = useState<Commune[]>([]);
+  const [quartiers, setQuartiers] = useState<Quartier[]>([]);
+  const [selectedQuartier, setSelectedQuartier] = useState<Quartier | null>(null);
+  const [estimationData, setEstimationData] = useState<EstimationData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [selectedCommune, setSelectedCommune] = useState<Commune | null>(null);
+  const [selectedCommuneId, setSelectedCommuneId] = useState<string>('');
+  const [selectedQuartierId, setSelectedQuartierId] = useState<string>('');
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<EstimationForm>({
-    resolver: zodResolver(estimationSchema),
-    defaultValues: {
-      nombre_etages: 1,
-    },
-  });
+  // Charger les communes au montage
+  useEffect(() => {
+    const fetchCommunes = async () => {
+      try {
+        const response = await fetch('/api/communes');
+        const data = await response.json();
+        if (data.success) {
+          setCommunes(data.data.sort((a: Commune, b: Commune) => a.nom.localeCompare(b.nom)));
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des communes:', error);
+      }
+    };
+    fetchCommunes();
+  }, []);
 
-  const finition = watch('finition');
+  // Charger les quartiers quand une commune est sélectionnée
+  useEffect(() => {
+    if (selectedCommuneId) {
+      const fetchQuartiers = async () => {
+        try {
+          const response = await fetch(`/api/quartiers/${selectedCommuneId}`);
+          const data = await response.json();
+          if (data.success) {
+            setQuartiers(data.data.sort((a: Quartier, b: Quartier) => a.nom.localeCompare(b.nom)));
+            setSelectedCommune(communes.find(c => c.id === selectedCommuneId) || null);
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement des quartiers:', error);
+        }
+      };
+      fetchQuartiers();
+    } else {
+      setQuartiers([]);
+      setSelectedCommune(null);
+    }
+  }, [selectedCommuneId, communes]);
 
-  // Prix indicatifs au m² en XOF selon la finition
-  const prixParM2: Record<string, number> = {
-    economique: 150000, // 150k XOF/m²
-    standard: 250000,   // 250k XOF/m²
-    haut_de_gamme: 400000, // 400k XOF/m²
-  };
-
-  const onSubmit = (data: EstimationForm) => {
-    const prixM2 = prixParM2[data.finition];
-    const montantBase = data.surface * prixM2;
-    
-    // Majoration pour les étages supplémentaires (5% par étage)
-    const majorationEtages = data.nombre_etages > 1 
-      ? montantBase * (data.nombre_etages - 1) * 0.05 
-      : 0;
-    
-    const montantTotal = montantBase + majorationEtages;
-    setResult(montantTotal);
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      maximumFractionDigits: 0,
-    }).format(price);
+  // Fonction pour récupérer les règles d'urbanisme
+  const handleGetUrbanRules = async (quartierId: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/estimation/${quartierId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setEstimationData(data.data);
+        setSelectedQuartier(quartiers.find(q => q.id === quartierId) || null);
+      } else {
+        alert('Aucune donnée d\'urbanisme disponible pour ce quartier');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des règles:', error);
+      alert('Erreur lors de la récupération des règles d\'urbanisme');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <MainLayout>
-      <div className="bg-gray-50">
+      <div className="bg-gradient-to-br from-blue-50 via-white to-amber-50 min-h-screen">
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="mb-2 text-3xl font-bold text-gray-900">
-              Estimation de projet de construction
+          {/* Header avec titre élégant */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+              <Building className="w-8 h-8 text-blue-600" />
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Règles d'urbanisme et coûts de construction
             </h1>
-            <p className="text-gray-600">
-              Obtenez une estimation rapide du coût de votre projet de construction
-            </p>
+            <div className="flex justify-center">
+              <p className="text-lg text-gray-600 max-w-2xl text-center">
+                Consultez les règles d'urbanisme par quartier et estimez le coût de votre projet de construction
+              </p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* Formulaire */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calculator className="h-5 w-5" />
-                    Renseignez les détails de votre projet
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="type_construction">Type de construction</Label>
-                      <Select
-                        onValueChange={(value) => setValue('type_construction', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionnez le type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="maison_individuelle">
-                            Maison individuelle
-                          </SelectItem>
-                          <SelectItem value="villa">Villa</SelectItem>
-                          <SelectItem value="immeuble">Immeuble</SelectItem>
-                          <SelectItem value="commerce">Commerce</SelectItem>
-                          <SelectItem value="bureaux">Bureaux</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {errors.type_construction && (
-                        <p className="text-sm text-red-600">
-                          {errors.type_construction.message}
-                        </p>
+          {/* Message informatif sur les communes couvertes */}
+          {/* <div className="max-w-4xl mx-auto mb-8">
+            <Card className="border-amber-200 bg-amber-50/50">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-3">
+                  <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-amber-900 space-y-2">
+                    <p className="font-semibold">Règles d'urbanisme disponibles</p>
+                    <p>
+                      Les règles générales d'urbanisme sont publiées avec précision uniquement pour les neuf communes suivantes: 
+                      <strong> Abobo, Adjamé, Attécoubé, Cocody, Koumassi, Marcory, Port-Bouët, Treichville et Yopougon</strong>.
+                    </p>
+                    <p>
+                      Pour toutes les autres communes du pays, nos équipes peuvent recueillir pour vous les informations actualisées selon le(s) quartier(s) auprès de l'antenne compétente du MCLU.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div> */}
+
+          {/* Sélection commune/quartier */}
+          <div className="max-w-4xl mx-auto mb-8">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="flex items-center justify-center gap-2 text-xl">
+                  <MapPin className="h-5 w-5 text-blue-600" />
+                  Sélectionnez votre zone
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="selected_commune_id" className="text-sm font-semibold">
+                      Sélectionnez une commune
+                    </Label>
+                    <SearchableSelect
+                      options={communes.map(c => ({ value: c.id, label: c.nom }))}
+                      value={selectedCommuneId}
+                      onValueChange={(value) => {
+                        setSelectedCommuneId(value);
+                        setSelectedQuartierId('');
+                        setEstimationData(null);
+                        setSelectedQuartier(null);
+                      }}
+                      placeholder="Choisissez une commune"
+                      searchPlaceholder="Rechercher une commune..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="selected_quartier_id" className="text-sm font-semibold">
+                      Sélectionnez un quartier
+                    </Label>
+                    <SearchableSelect
+                      options={quartiers.map(q => ({ value: q.id, label: q.nom }))}
+                      value={selectedQuartierId}
+                      onValueChange={(value) => setSelectedQuartierId(value)}
+                      placeholder={selectedCommuneId ? "Choisissez un quartier" : "Choisissez d'abord une commune"}
+                      searchPlaceholder="Rechercher un quartier..."
+                      disabled={!selectedCommuneId}
+                    />
+                  </div>
+                </div>
+
+                {/* Bouton pour voir les règles d'urbanisme */}
+                {selectedCommuneId && selectedQuartierId && selectedQuartierId !== '' && (
+                  <div className="mt-6 text-center">
+                    <Button 
+                      onClick={() => handleGetUrbanRules(selectedQuartierId)}
+                      disabled={loading}
+                      className="w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                    >
+                      {loading ? (
+                        <>
+                          <Building className="mr-2 h-4 w-4 animate-spin" />
+                          Chargement...
+                        </>
+                      ) : (
+                        <>
+                          <Building className="mr-2 h-4 w-4" />
+                          Voir les règles d'urbanisme
+                        </>
                       )}
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="surface">Surface (m²)</Label>
-                        <Input
-                          id="surface"
-                          type="number"
-                          placeholder="Ex: 150"
-                          {...register('surface', { valueAsNumber: true })}
-                        />
-                        {errors.surface && (
-                          <p className="text-sm text-red-600">
-                            {errors.surface.message}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="nombre_etages">Nombre d'étages</Label>
-                        <Input
-                          id="nombre_etages"
-                          type="number"
-                          min="1"
-                          placeholder="Ex: 1"
-                          {...register('nombre_etages', { valueAsNumber: true })}
-                        />
-                        {errors.nombre_etages && (
-                          <p className="text-sm text-red-600">
-                            {errors.nombre_etages.message}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="finition">Niveau de finition</Label>
-                      <Select
-                        onValueChange={(value: any) => setValue('finition', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionnez la finition" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="economique">
-                            Économique - {formatPrice(prixParM2.economique)}/m²
-                          </SelectItem>
-                          <SelectItem value="standard">
-                            Standard - {formatPrice(prixParM2.standard)}/m²
-                          </SelectItem>
-                          <SelectItem value="haut_de_gamme">
-                            Haut de gamme - {formatPrice(prixParM2.haut_de_gamme)}/m²
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {errors.finition && (
-                        <p className="text-sm text-red-600">
-                          {errors.finition.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email (optionnel)</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="votre@email.com"
-                        {...register('email')}
-                      />
-                      <p className="text-xs text-gray-500">
-                        Recevez l'estimation par email
-                      </p>
-                    </div>
-
-                    <Button type="submit" className="w-full">
-                      <Calculator className="mr-2 h-4 w-4" />
-                      Calculer l'estimation
                     </Button>
-                  </form>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Bouton Simuler mon projet - Toujours visible */}
+          <div className="max-w-4xl mx-auto mb-8">
+            <Card className="shadow-lg border-0 bg-gradient-to-r from-green-600 to-green-700">
+              <CardContent className="p-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-white">
+                  <div className="text-center sm:text-left">
+                    <h3 className="text-xl font-bold mb-2 flex items-center justify-center sm:justify-start gap-2">
+                      <Calculator className="h-6 w-6" />
+                      Simuler le coût de votre projet
+                    </h3>
+                    <p className="text-green-100 text-sm">
+                      Obtenez une estimation détaillée du coût de construction
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => window.location.href = '/simulation'}
+                    className="bg-white text-green-700 hover:bg-green-50 font-semibold px-8 py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                  >
+                    <Calculator className="mr-2 h-5 w-5" />
+                    Démarrer la simulation
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Affichage des règles d'urbanisme */}
+          {selectedQuartier && estimationData ? (
+            <div className="max-w-4xl mx-auto mb-8">
+              <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
+                <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Building className="h-5 w-5" />
+                    Règles d'urbanisme - {selectedQuartier.nom}
+                  </CardTitle>
+                  <p className="text-blue-100 text-sm">
+                    {selectedCommune?.nom} • Données officielles MCLU
+                  </p>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-gray-50 border-b">
+                          <th className="p-4 text-left font-semibold text-gray-700">Quartier</th>
+                          <th className="p-4 text-left font-semibold text-gray-700">C.O.S. (Surface constructible)</th>
+                          <th className="p-4 text-left font-semibold text-gray-700">Hauteur maximale</th>
+                          <th className="p-4 text-left font-semibold text-gray-700">Niveau autorisé</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b hover:bg-blue-50 transition-colors">
+                          <td className="p-4 font-medium text-gray-900">{selectedQuartier.nom}</td>
+                          <td className="p-4">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
+                              {estimationData.coefficient_occupa_sols.toLocaleString('fr-FR')} %
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                              {estimationData.hauteur.toLocaleString('fr-FR')} m
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-purple-100 text-purple-800">
+                              R+ {estimationData.niveau.toLocaleString('fr-FR')}
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </CardContent>
               </Card>
             </div>
+          ) : null}
 
-            {/* Résultat */}
-            <div className="lg:col-span-1">
-              {result !== null ? (
-                <Card className="sticky top-4">
-                  <CardHeader>
-                    <CardTitle className="text-green-600">
-                      Estimation de votre projet
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="rounded-lg bg-green-50 p-6 text-center">
-                      <div className="mb-2 text-sm text-gray-600">
-                        Coût estimé
-                      </div>
-                      <div className="text-3xl font-bold text-green-600">
-                        {formatPrice(result)}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4">
-                      <div className="flex items-start gap-2">
-                        <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
-                        <div className="text-xs text-amber-900">
-                          <p className="mb-2 font-semibold">
-                            Cette estimation est indicative
-                          </p>
-                          <ul className="list-inside list-disc space-y-1">
-                            <li>Prix basés sur le marché actuel</li>
-                            <li>Peut varier selon le quartier</li>
-                            <li>N'inclut pas le coût du terrain</li>
-                            <li>Consultez un expert pour plus de précision</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button variant="outline" className="w-full" asChild>
-                      <a href="mailto:contact@toubabi.com">
-                        Demander un devis détaillé
-                      </a>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="sticky top-4">
-                  <CardHeader>
-                    <CardTitle>À propos de l'estimation</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4 text-sm text-gray-600">
-                      <p>
-                        Notre outil vous permet d'obtenir une estimation rapide du coût
-                        de construction de votre projet.
-                      </p>
-                      <div className="space-y-2">
-                        <p className="font-semibold">Niveaux de finition :</p>
-                        <ul className="list-inside list-disc space-y-1">
-                          <li>
-                            <strong>Économique :</strong> Matériaux standards,
-                            finitions simples
-                          </li>
-                          <li>
-                            <strong>Standard :</strong> Bon rapport qualité/prix
-                          </li>
-                          <li>
-                            <strong>Haut de gamme :</strong> Matériaux premium,
-                            finitions luxueuses
-                          </li>
-                        </ul>
-                      </div>
-                      <p className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
-                        Remplissez le formulaire pour obtenir votre estimation
-                        personnalisée.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+          {/* Boutons de navigation */}
+          <div className="max-w-4xl mx-auto text-center">
+            <Button 
+              variant="outline" 
+              className="px-8 py-3 border-gray-300 text-gray-700 hover:bg-gray-50"
+              onClick={() => window.location.href = '/'}
+            >
+              Retour à l'accueil
+            </Button>
           </div>
         </div>
       </div>
     </MainLayout>
   );
 }
-

@@ -1,35 +1,32 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
-export async function GET() {
+const prisma = new PrismaClient();
+
+export async function GET(request: NextRequest) {
   try {
     const communes = await prisma.communes.findMany({
-      include: {
-        ville: true,
+      select: {
+        id: true,
+        nom: true,
       },
-      orderBy: { nom: 'asc' },
+      orderBy: {
+        nom: 'asc',
+      },
     });
-
-    const communesFormatted = communes.map((c) => ({
-      id: Number(c.id),
-      nom: c.nom,
-      ville_id: Number(c.ville_id),
-      ville: {
-        id: Number(c.ville.id),
-        nom: c.ville.nom,
-      },
-    }));
 
     return NextResponse.json({
       success: true,
-      data: communesFormatted,
+      data: communes.map(commune => ({
+        id: commune.id.toString(),
+        nom: commune.nom,
+      })),
     });
   } catch (error) {
-    console.error('Erreur API communes:', error);
+    console.error('Erreur lors de la récupération des communes:', error);
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
+      { success: false, error: 'Failed to fetch communes' },
       { status: 500 }
     );
   }
 }
-

@@ -84,49 +84,67 @@ export default function MapStats({ quartiers }: MapStatsProps) {
         const pmyv = formatPrice((quartier as any).prix_moy_vente);
         const nbreBiens = (quartier as any).nbre_biens || '-';
 
-        const popup = new mapboxgl.Popup({ offset: 25, closeOnClick: false, maxWidth: '380px' }).setHTML(`
-          <div class="p-4 w-full max-w-[350px]">
-            <h4 class="font-bold text-xl mb-2 text-gray-800 break-words">${quartier.nom}</h4>
-            <p class="text-base font-bold text-blue-700 mb-4">${nbreBiens} bien(s)</p>
+        // Déterminer l'ancre en fonction de la position sur la carte
+        const mapContainer = map.current.getContainer();
+        const mapRect = mapContainer.getBoundingClientRect();
+        const point = map.current.project([lng, lat]);
+        
+        // Si le marqueur est dans la moitié inférieure de la carte, afficher la popup au-dessus
+        const anchor = point.y > mapRect.height / 2 ? 'bottom' : 'top';
+        
+        const popup = new mapboxgl.Popup({ 
+          offset: 25, 
+          closeOnClick: false, 
+          maxWidth: '520px',
+          anchor: anchor
+        }).setHTML(`
+          <div class="p-4 w-full max-w-[480px]">
+            <h4 class="font-bold text-2xl mb-2 text-gray-800 break-words">${quartier.nom}</h4>
+            <p class="text-lg font-bold text-blue-700 mb-2">${nbreBiens} bien(s)</p>
+            <p class="text-xs text-gray-500 mb-4">Prix en F CFA (XOF)</p>
             
-            <div class="mb-4">
-              <p class="text-sm font-semibold text-blue-700 uppercase mb-3">Location</p>
-              <div class="space-y-2 text-sm">
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600 flex-shrink-0 mr-2">Prix minimum:</span>
-                  <span class="font-bold text-blue-700 text-right break-all">${pmil}</span>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <!-- Location -->
+              <div>
+                <p class="text-base font-semibold text-blue-700 uppercase mb-3">Location</p>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600 text-sm">Min:</span>
+                    <span class="font-bold text-blue-700 text-sm">${pmil}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600 text-sm">Moy:</span>
+                    <span class="font-bold text-blue-700 text-sm">${pmyl}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600 text-sm">Max:</span>
+                    <span class="font-bold text-blue-700 text-sm">${pmal}</span>
+                  </div>
                 </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600 flex-shrink-0 mr-2">Prix moyen:</span>
-                  <span class="font-bold text-blue-700 text-right break-all">${pmyl}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600 flex-shrink-0 mr-2">Prix maximum:</span>
-                  <span class="font-bold text-blue-700 text-right break-all">${pmal}</span>
+              </div>
+              
+              <!-- Vente -->
+              <div>
+                <p class="text-base font-semibold text-green-700 uppercase mb-3">Vente</p>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600 text-sm">Min:</span>
+                    <span class="font-bold text-green-700 text-sm">${pmiv}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600 text-sm">Moy:</span>
+                    <span class="font-bold text-green-700 text-sm">${pmyv}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600 text-sm">Max:</span>
+                    <span class="font-bold text-green-700 text-sm">${pmav}</span>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <div class="mb-4">
-              <p class="text-sm font-semibold text-green-700 uppercase mb-3">Vente</p>
-              <div class="space-y-2 text-sm">
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600 flex-shrink-0 mr-2">Prix minimum:</span>
-                  <span class="font-bold text-green-700 text-right break-all">${pmiv}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600 flex-shrink-0 mr-2">Prix moyen:</span>
-                  <span class="font-bold text-green-700 text-right break-all">${pmyv}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-600 flex-shrink-0 mr-2">Prix maximum:</span>
-                  <span class="font-bold text-green-700 text-right break-all">${pmav}</span>
-                </div>
-              </div>
-            </div>
-            
-            <p class="text-sm text-red-600 mt-4 border-t pt-3">
-              <svg class="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <p class="text-base text-red-600 mt-4 border-t pt-3">
+              <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9a1 1 0 012 0v4a1 1 0 11-2 0V9zm1-4a1 1 0 100 2 1 1 0 000-2z"/>
               </svg>
               Cliquez pour plus de détails
@@ -199,6 +217,7 @@ export default function MapStats({ quartiers }: MapStatsProps) {
                   <CardTitle className="text-2xl">{selectedQuartier.nom}</CardTitle>
                   <p className="text-base text-gray-600 mt-1">{(selectedQuartier as any)?.commune?.nom || ''}</p>
                   <p className="text-base font-bold text-blue-700 mt-1">{(selectedQuartier as any).nbre_biens ?? (selectedQuartier as any).nb_biens ?? '-'} bien(s)</p>
+                  <p className="text-sm text-gray-500 mt-1">Prix en F CFA (XOF)</p>
                   {/* <p className="text-sm text-gray-500 mt-1">
                     {((selectedQuartier as any).prix?.length || 0)} type(s) de biens disponibles
                   </p> */}

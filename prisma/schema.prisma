@@ -21,10 +21,8 @@ model users {
   created_at        DateTime?
   updated_at        DateTime?
   
-  produits          produits[]
   wishlists         wishlists[]
   commandes         commandes[]
-  commentaires      commentaires[]
 }
 
 model pays {
@@ -51,16 +49,19 @@ model villes {
 }
 
 model communes {
-  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  nom        String   @db.VarChar(255)
-  ville_id   BigInt   @db.UnsignedBigInt
-  created_at DateTime?
-  updated_at DateTime?
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  id_ville   BigInt    @db.UnsignedBigInt
+  nom        String    @db.VarChar(255)
+  image      String?   @db.LongText
+  enabled    Boolean   @default(true) @db.TinyInt
+  deleted_at DateTime? @db.Timestamp(0)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
   
-  ville      villes   @relation(fields: [ville_id], references: [id])
+  ville      villes      @relation(fields: [id_ville], references: [id])
   quartiers  quartiers[]
   
-  @@index([ville_id])
+  @@index([id_ville])
 }
 
 model quartiers {
@@ -84,18 +85,19 @@ model quartiers {
   prix_marchand     BigInt?
   prix_moyen        BigInt?
   
-  commune           communes  @relation(fields: [id_commune], references: [id])
-  produits          produits[]
+  commune           communes    @relation(fields: [id_commune], references: [id])
   
   @@index([id_commune])
   @@map("quartiers")
 }
 
 model categories {
-  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  nom         String   @db.VarChar(255)
-  description String?  @db.Text
-  image       String?  @db.VarChar(255)
+  code        String    @id @db.VarChar(255)
+  nom         String    @unique @db.VarChar(255)
+  images      String?   @db.LongText
+  enabled     Int       @default(1) @db.TinyInt
+  pro         Int       @default(0) @db.TinyInt
+  deleted_at  DateTime?
   created_at  DateTime?
   updated_at  DateTime?
   
@@ -106,14 +108,13 @@ model categories {
 model souscategories {
   id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
   nom          String   @db.VarChar(255)
-  categorie_id BigInt   @db.UnsignedBigInt
+  code_categorie String? @db.VarChar(255)
   created_at   DateTime?
   updated_at   DateTime?
   
-  categorie    categories @relation(fields: [categorie_id], references: [id])
-  produits     produits[]
+  categorie    categories? @relation(fields: [code_categorie], references: [code])
   
-  @@index([categorie_id])
+  @@index([code_categorie])
 }
 
 model type_annonces {
@@ -122,72 +123,59 @@ model type_annonces {
   description String?  @db.Text
   created_at  DateTime?
   updated_at  DateTime?
-  
-  produits    produits[]
 }
 
 model produits {
-  id                   BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  titre                String   @db.VarChar(255)
-  description          String   @db.Text
-  prix                 Decimal  @db.Decimal(15, 2)
-  surface              Decimal? @db.Decimal(10, 2)
-  nombre_pieces        Int?
-  nombre_chambres      Int?
-  nombre_salles_bain   Int?
-  categorie_id         BigInt   @db.UnsignedBigInt
-  sous_categorie_id    BigInt?  @db.UnsignedBigInt
-  type_annonce_id      BigInt   @db.UnsignedBigInt
-  quartier_id          BigInt   @db.UnsignedBigInt
-  user_id              BigInt   @db.UnsignedBigInt
-  statut               String   @default("en_attente") @db.VarChar(50)
-  caracteristiques     Json?
+  code                 String    @id @db.VarChar(255)
+  nom                  String    @db.VarChar(255)
+  image                String    @db.LongText
+  prix_achat           BigInt?   @db.BigInt
+  prix_vente           BigInt    @db.BigInt
+  description          String?   @db.LongText
+  code_categorie       String    @db.VarChar(255)
+  code_souscategorie   String?   @db.VarChar(255)
+  vues                 Int       @default(0)
+  surface              Int       @default(0)
+  piece                Int       @default(0)
+  chambre              Int       @default(0)
+  id_commune           Int?
+  id_quartier          Int?
+  type_annonce         String    @default("louer") @db.VarChar(255)
+  meuble               Int?      @db.TinyInt
+  long_lat             Int?
+  enabled              Int       @db.TinyInt
+  owner_id             Int?
+  client_owner_id      Int?
+  deleted_at           DateTime?
   created_at           DateTime?
   updated_at           DateTime?
   
-  categorie            categories      @relation(fields: [categorie_id], references: [id])
-  sous_categorie       souscategories? @relation(fields: [sous_categorie_id], references: [id])
-  type_annonce         type_annonces   @relation(fields: [type_annonce_id], references: [id])
-  quartier             quartiers       @relation(fields: [quartier_id], references: [id])
-  user                 users           @relation(fields: [user_id], references: [id])
-  images               images[]
+  categorie            categories?      @relation(fields: [code_categorie], references: [code])
   wishlists            wishlists[]
-  commande_details     commande_details[]
   commentaires         commentaires[]
   
-  @@index([categorie_id])
-  @@index([sous_categorie_id])
-  @@index([type_annonce_id])
-  @@index([quartier_id])
-  @@index([user_id])
+  @@index([code_categorie])
+  @@index([code_souscategorie])
+  @@index([id_commune])
+  @@index([id_quartier])
 }
 
-model images {
-  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  produit_id  BigInt   @db.UnsignedBigInt
-  url         String   @db.VarChar(255)
-  alt         String?  @db.VarChar(255)
-  created_at  DateTime?
-  updated_at  DateTime?
-  
-  produit     produits @relation(fields: [produit_id], references: [id], onDelete: Cascade)
-  
-  @@index([produit_id])
-}
+// Table images n'existe pas dans la base de données Laravel
+// Les images sont stockées en JSON dans le champ image de produits
 
 model wishlists {
-  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  user_id     BigInt   @db.UnsignedBigInt
-  produit_id  BigInt   @db.UnsignedBigInt
-  created_at  DateTime?
-  updated_at  DateTime?
+  id            BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  id_client     BigInt   @db.UnsignedBigInt
+  code_produit  String   @db.VarChar(255)
+  created_at    DateTime?
+  updated_at    DateTime?
   
-  user        users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  produit     produits @relation(fields: [produit_id], references: [id], onDelete: Cascade)
+  user          users    @relation(fields: [id_client], references: [id], onDelete: Cascade)
+  produit       produits @relation(fields: [code_produit], references: [code], onDelete: Cascade)
   
-  @@unique([user_id, produit_id])
-  @@index([user_id])
-  @@index([produit_id])
+  @@unique([id_client, code_produit])
+  @@index([id_client])
+  @@index([code_produit])
 }
 
 model commandes {
@@ -199,40 +187,25 @@ model commandes {
   updated_at  DateTime?
   
   user        users    @relation(fields: [user_id], references: [id])
-  details     commande_details[]
   
   @@index([user_id])
 }
 
-model commande_details {
-  id              BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  commande_id     BigInt   @db.UnsignedBigInt
-  produit_id      BigInt   @db.UnsignedBigInt
-  quantite        Int
-  prix_unitaire   Decimal  @db.Decimal(15, 2)
-  created_at      DateTime?
-  updated_at      DateTime?
-  
-  commande        commandes @relation(fields: [commande_id], references: [id], onDelete: Cascade)
-  produit         produits  @relation(fields: [produit_id], references: [id])
-  
-  @@index([commande_id])
-  @@index([produit_id])
-}
+// Table commande_details n'existe pas dans la base de données Laravel
 
 model commentaires {
-  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  contenu     String   @db.Text
-  user_id     BigInt   @db.UnsignedBigInt
-  produit_id  BigInt   @db.UnsignedBigInt
-  created_at  DateTime?
-  updated_at  DateTime?
+  id            BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom           String   @db.VarChar(255)
+  commentaire   String   @db.Text
+  note          BigInt?  @db.UnsignedBigInt
+  active        Int      @default(1) @db.TinyInt
+  produit_code  String   @db.VarChar(255)
+  created_at    DateTime?
+  updated_at    DateTime?
   
-  user        users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  produit     produits @relation(fields: [produit_id], references: [id], onDelete: Cascade)
+  produit       produits @relation(fields: [produit_code], references: [code], onDelete: Cascade)
   
-  @@index([user_id])
-  @@index([produit_id])
+  @@index([produit_code])
 }
 
 model sliders {
@@ -260,14 +233,23 @@ model contact {
 }
 
 model estimes {
-  id                BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  user_id           BigInt?  @db.UnsignedBigInt
-  type_construction String   @db.VarChar(255)
-  surface           Decimal  @db.Decimal(10, 2)
-  nombre_etages     Int
-  finition          String   @db.VarChar(50)
-  montant_estime    Decimal  @db.Decimal(15, 2)
-  email             String?  @db.VarChar(255)
-  created_at        DateTime?
-  updated_at        DateTime?
+  id                        BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  id_quartier               Int?
+  coefficient_occupa_sols   Decimal?  @db.Decimal(8, 2)
+  hauteur                   Decimal?  @db.Decimal(8, 2)
+  niveau                    Int?
+  prix_gros_oeuvre          Decimal?  @db.Decimal(10, 2)
+  prix_second_oeuvre        Decimal?  @db.Decimal(10, 2)
+  prix_gros_oeuvre_r0_legere Decimal? @db.Decimal(10, 2)
+  prix_gros_oeuvre_r0_dalle Decimal?  @db.Decimal(10, 2)
+  prix_gros_oeuvre_r1_r3    Decimal?  @db.Decimal(10, 2)
+  prix_gros_oeuvre_r4_r6    Decimal?  @db.Decimal(10, 2)
+  prix_gros_oeuvre_r7_r9    Decimal?  @db.Decimal(10, 2)
+  prix_gros_oeuvre_r10_rx   Decimal?  @db.Decimal(10, 2)
+  prix_second_oeuvre_bas    Decimal?  @db.Decimal(10, 2)
+  prix_second_oeuvre_moyen  Decimal?  @db.Decimal(10, 2)
+  prix_second_oeuvre_haut   Decimal?  @db.Decimal(10, 2)
+  prix_second_oeuvre_tres_haut Decimal? @db.Decimal(10, 2)
+  created_at                DateTime?
+  updated_at                DateTime?
 }

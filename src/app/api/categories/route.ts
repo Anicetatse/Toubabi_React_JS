@@ -3,20 +3,17 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const categories = await prisma.categories.findMany({
-      orderBy: { nom: 'asc' },
-    });
-
-    const categoriesFormatted = categories.map((c) => ({
-      id: Number(c.id),
-      nom: c.nom,
-      description: c.description,
-      image: c.image,
-    }));
+    // Utiliser requête SQL directe car le schéma Prisma n'est pas encore synchronisé
+    const categories = await prisma.$queryRawUnsafe(`
+      SELECT code, nom, images, enabled 
+      FROM categories 
+      WHERE enabled = 1 
+      ORDER BY nom ASC
+    `) as any[];
 
     return NextResponse.json({
       success: true,
-      data: categoriesFormatted,
+      data: categories,
     });
   } catch (error) {
     console.error('Erreur API categories:', error);

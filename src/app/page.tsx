@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { locationService } from '@/services/locationService';
 import { Quartier } from '@/types';
-import { Search, Loader2, Info } from 'lucide-react';
+import { Search, Loader2, Info, Calculator } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,6 +28,7 @@ const MapComponent = dynamic(
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedQuartier, setSelectedQuartier] = useState<Quartier | null>(null);
+  const router = useRouter();
 
   // Récupérer les quartiers avec leurs prix depuis la BDD
   const { data: quartiers = [], isLoading } = useQuery({
@@ -67,11 +69,27 @@ export default function HomePage() {
     return null;
   };
 
+  const handleSimulationClick = () => {
+    // Rediriger vers la page de simulation (l'auth sera vérifiée là-bas)
+    router.push('/simulation');
+  };
+
   return (
     <MainLayout>
       <div className="relative h-[calc(100vh-4rem)]">
+        {/* Bouton Faire une simulation */}
+        <div className="absolute right-4 top-4 z-10 md:right-8">
+          <Button
+            onClick={handleSimulationClick}
+            className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            <Calculator className="mr-2 h-4 w-4" />
+            Faire une simulation
+          </Button>
+        </div>
+
         {/* Barre de recherche */}
-        <div className="absolute left-4 right-4 top-4 z-10 md:left-8 md:right-auto md:w-96">
+        <div className="absolute left-4 right-4 top-4 z-10 md:left-8 md:right-auto md:w-96 md:top-4">
           <Card>
             <CardContent className="p-4">
               <div className="relative">

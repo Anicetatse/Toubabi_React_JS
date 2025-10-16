@@ -81,40 +81,58 @@ export default function MapBiens({ quartiers }: MapBiensProps) {
         const pmiv = formatPrice((quartier as any).prix_min_vente);
         const pmav = formatPrice((quartier as any).prix_max_vente);
 
-        const popup = new mapboxgl.Popup({ offset: 25, closeOnClick: false, maxWidth: '350px' }).setHTML(`
+        // Déterminer l'ancre en fonction de la position sur la carte
+        const mapContainer = map.current.getContainer();
+        const mapRect = mapContainer.getBoundingClientRect();
+        const point = map.current.project([lng, lat]);
+        
+        // Si le marqueur est dans la moitié inférieure de la carte, afficher la popup au-dessus
+        const anchor = point.y > mapRect.height / 2 ? 'bottom' : 'top';
+        
+        const popup = new mapboxgl.Popup({ 
+          offset: 25, 
+          closeOnClick: false, 
+          maxWidth: '470px',
+          anchor: anchor
+        }).setHTML(`
           <div class="p-4">
-            <h4 class="font-bold text-lg mb-3 text-gray-800 border-b pb-2">${quartier.nom}</h4>
+            <h4 class="font-bold text-xl mb-2 text-gray-800 border-b pb-2">${quartier.nom}</h4>
+            <p class="text-xs text-gray-500 mb-3">Prix en F CFA (XOF)</p>
             
-            <div class="mb-3">
-              <p class="text-xs font-semibold text-blue-700 uppercase mb-1">Location</p>
-              <div class="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span class="text-gray-600">Min:</span>
-                  <span class="font-bold text-blue-700 ml-1">${pmil}</span>
+            <div class="grid grid-cols-2 gap-4 mb-3">
+              <!-- Location -->
+              <div>
+                <p class="text-sm font-semibold text-blue-700 uppercase mb-2">Location</p>
+                <div class="space-y-1">
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600 text-sm">Min:</span>
+                    <span class="font-bold text-blue-700 text-sm">${pmil}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600 text-sm">Max:</span>
+                    <span class="font-bold text-blue-700 text-sm">${pmal}</span>
+                  </div>
                 </div>
-                <div>
-                  <span class="text-gray-600">Max:</span>
-                  <span class="font-bold text-blue-700 ml-1">${pmal}</span>
+              </div>
+              
+              <!-- Vente -->
+              <div>
+                <p class="text-sm font-semibold text-green-700 uppercase mb-2">Vente</p>
+                <div class="space-y-1">
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600 text-sm">Min:</span>
+                    <span class="font-bold text-green-700 text-sm">${pmiv}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600 text-sm">Max:</span>
+                    <span class="font-bold text-green-700 text-sm">${pmav}</span>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <div class="mb-2">
-              <p class="text-xs font-semibold text-green-700 uppercase mb-1">Vente</p>
-              <div class="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span class="text-gray-600">Min:</span>
-                  <span class="font-bold text-green-700 ml-1">${pmiv}</span>
-                </div>
-                <div>
-                  <span class="text-gray-600">Max:</span>
-                  <span class="font-bold text-green-700 ml-1">${pmav}</span>
-                </div>
-              </div>
-            </div>
-            
-            <p class="text-xs text-red-600 mt-3 border-t pt-2">
-              <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <p class="text-sm text-red-600 mt-3 border-t pt-2">
+              <svg class="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9a1 1 0 012 0v4a1 1 0 11-2 0V9zm1-4a1 1 0 100 2 1 1 0 000-2z"/>
               </svg>
               Cliquez pour plus de détails
@@ -185,6 +203,7 @@ export default function MapBiens({ quartiers }: MapBiensProps) {
                 <div className="flex-1">
                   <CardTitle className="text-xl">{selectedQuartier.nom}</CardTitle>
                   <p className="text-sm text-gray-600 mt-1">{(selectedQuartier as any)?.commune?.nom || ''}</p>
+                  <p className="text-sm text-gray-500 mt-1">Prix en F CFA (XOF)</p>
                 </div>
                 <button
                   onClick={() => setSelectedQuartier(null)}
