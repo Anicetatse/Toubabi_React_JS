@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 
 // Hook pour les statistiques du dashboard
 export function useDashboardStats() {
-  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('auth_token');
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
   
   return useQuery<DashboardStats>({
     queryKey: ['admin', 'dashboard', 'stats'],
@@ -17,7 +17,7 @@ export function useDashboardStats() {
 
 // Hook pour la gestion des biens
 export function useAdminBiens(page = 1, limit = 10, search = '') {
-  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('auth_token');
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
   
   return useQuery({
     queryKey: ['admin', 'biens', page, limit, search],
@@ -86,7 +86,7 @@ export function useToggleBienStatus() {
 
 // Hook pour la gestion des clients
 export function useAdminClients(page = 1, limit = 10, search = '') {
-  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('auth_token');
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
   
   return useQuery({
     queryKey: ['admin', 'clients', page, limit, search],
@@ -155,7 +155,7 @@ export function useToggleClientStatus() {
 
 // Hook pour la gestion des commandes
 export function useAdminCommandes(page = 1, limit = 10, search = '', status?: number) {
-  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('auth_token');
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
   
   return useQuery({
     queryKey: ['admin', 'commandes', page, limit, search, status],
@@ -191,7 +191,7 @@ export function useUpdateCommandeStatus() {
 
 // Hook pour la gestion des catégories
 export function useAdminCategories() {
-  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('auth_token');
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
   
   return useQuery({
     queryKey: ['admin', 'categories'],

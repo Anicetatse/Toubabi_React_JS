@@ -3,47 +3,36 @@ import axios from 'axios';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export interface DashboardStats {
-  biens: {
-    total: number;
-    actifs: number;
-    inactifs: number;
+  // EXACTEMENT comme le dashboard Laravel
+  commandes: {
+    nonTraitees: number;  // status = 0
+    traitees: number;     // status = 1
   };
   utilisateurs: {
-    total: number;
-    admins: number;
+    total: number;        // count(clients)
+    admins: number;       // count(users)
   };
-  commandes: {
-    total: number;
-    enAttente: number;
-    traitees: number;
+  biens: {
+    actifs: number;       // enabled = 1
+    nonActifs: number;    // enabled = 0
+    total: number;        // total
   };
   geographie: {
     villes: number;
     communes: number;
     quartiers: number;
   };
-  derniersBiens: Array<{
-    id: number;
+  dernierProduit: {
     code: string;
     nom: string;
-    prix_vente: number;
-    enabled: boolean;
-    client_nom: string;
-    quartier_nom: string;
-    commune_nom: string;
-    created_at: string;
-  }>;
-  activitesRecentes: Array<{
-    action: string;
-    description: string;
-    date: string;
-  }>;
+    created_at: string | null;
+  } | null;
   statsParCommune: Array<{
     id: number;
     nom: string;
-    total_biens: number;
-    biens_actifs: number;
-    biens_en_attente: number;
+    total_biens: number;       // getAnnonceCount()
+    biens_approuves: number;   // getAnnonceActifCount()
+    biens_en_attente: number;  // getAnnonceNonActifCount()
   }>;
 }
 
@@ -105,8 +94,9 @@ export interface CategorieAdmin {
 }
 
 class AdminService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem('auth_token');
+  private getAuthHeaders = () => {
+    // Utiliser le token admin séparé
+    const token = localStorage.getItem('admin_token');
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -114,7 +104,7 @@ class AdminService {
   }
 
   // Dashboard
-  async getDashboardStats(): Promise<DashboardStats> {
+  getDashboardStats = async (): Promise<DashboardStats> => {
     const response = await axios.get(`${API_URL}/api/admin/dashboard/stats`, {
       headers: this.getAuthHeaders(),
     });
@@ -122,7 +112,7 @@ class AdminService {
   }
 
   // Gestion des biens
-  async getBiens(page = 1, limit = 10, search = ''): Promise<{ biens: BienAdmin[]; total: number }> {
+  getBiens = async (page = 1, limit = 10, search = ''): Promise<{ biens: BienAdmin[]; total: number }> => {
     const response = await axios.get(`${API_URL}/api/admin/biens`, {
       headers: this.getAuthHeaders(),
       params: { page, limit, search },
@@ -130,27 +120,27 @@ class AdminService {
     return response.data;
   }
 
-  async getBienById(id: number): Promise<BienAdmin> {
+  getBienById = async (id: number): Promise<BienAdmin> => {
     const response = await axios.get(`${API_URL}/api/admin/biens/${id}`, {
       headers: this.getAuthHeaders(),
     });
     return response.data;
   }
 
-  async updateBien(id: number, data: Partial<BienAdmin>): Promise<BienAdmin> {
+  updateBien = async (id: number, data: Partial<BienAdmin>): Promise<BienAdmin> => {
     const response = await axios.put(`${API_URL}/api/admin/biens/${id}`, data, {
       headers: this.getAuthHeaders(),
     });
     return response.data;
   }
 
-  async deleteBien(id: number): Promise<void> {
+  deleteBien = async (id: number): Promise<void> => {
     await axios.delete(`${API_URL}/api/admin/biens/${id}`, {
       headers: this.getAuthHeaders(),
     });
   }
 
-  async toggleBienStatus(id: number, enabled: boolean): Promise<BienAdmin> {
+  toggleBienStatus = async (id: number, enabled: boolean): Promise<BienAdmin> => {
     const response = await axios.patch(`${API_URL}/api/admin/biens/${id}/toggle`, { enabled }, {
       headers: this.getAuthHeaders(),
     });
@@ -158,7 +148,7 @@ class AdminService {
   }
 
   // Gestion des clients
-  async getClients(page = 1, limit = 10, search = ''): Promise<{ clients: ClientAdmin[]; total: number }> {
+  getClients = async (page = 1, limit = 10, search = ''): Promise<{ clients: ClientAdmin[]; total: number }> => {
     const response = await axios.get(`${API_URL}/api/admin/clients`, {
       headers: this.getAuthHeaders(),
       params: { page, limit, search },
@@ -166,27 +156,27 @@ class AdminService {
     return response.data;
   }
 
-  async getClientById(id: number): Promise<ClientAdmin> {
+  getClientById = async (id: number): Promise<ClientAdmin> => {
     const response = await axios.get(`${API_URL}/api/admin/clients/${id}`, {
       headers: this.getAuthHeaders(),
     });
     return response.data;
   }
 
-  async updateClient(id: number, data: Partial<ClientAdmin>): Promise<ClientAdmin> {
+  updateClient = async (id: number, data: Partial<ClientAdmin>): Promise<ClientAdmin> => {
     const response = await axios.put(`${API_URL}/api/admin/clients/${id}`, data, {
       headers: this.getAuthHeaders(),
     });
     return response.data;
   }
 
-  async deleteClient(id: number): Promise<void> {
+  deleteClient = async (id: number): Promise<void> => {
     await axios.delete(`${API_URL}/api/admin/clients/${id}`, {
       headers: this.getAuthHeaders(),
     });
   }
 
-  async toggleClientStatus(id: number, enabled: boolean): Promise<ClientAdmin> {
+  toggleClientStatus = async (id: number, enabled: boolean): Promise<ClientAdmin> => {
     const response = await axios.patch(`${API_URL}/api/admin/clients/${id}/toggle`, { enabled }, {
       headers: this.getAuthHeaders(),
     });
@@ -194,7 +184,7 @@ class AdminService {
   }
 
   // Gestion des commandes
-  async getCommandes(page = 1, limit = 10, search = '', status?: number): Promise<{ commandes: CommandeAdmin[]; total: number }> {
+  getCommandes = async (page = 1, limit = 10, search = '', status?: number): Promise<{ commandes: CommandeAdmin[]; total: number }> => {
     const response = await axios.get(`${API_URL}/api/admin/commandes`, {
       headers: this.getAuthHeaders(),
       params: { page, limit, search, status },
@@ -202,14 +192,14 @@ class AdminService {
     return response.data;
   }
 
-  async getCommandeById(id: number): Promise<CommandeAdmin> {
+  getCommandeById = async (id: number): Promise<CommandeAdmin> => {
     const response = await axios.get(`${API_URL}/api/admin/commandes/${id}`, {
       headers: this.getAuthHeaders(),
     });
     return response.data;
   }
 
-  async updateCommandeStatus(id: number, status: number): Promise<CommandeAdmin> {
+  updateCommandeStatus = async (id: number, status: number): Promise<CommandeAdmin> => {
     const response = await axios.patch(`${API_URL}/api/admin/commandes/${id}`, { status }, {
       headers: this.getAuthHeaders(),
     });
@@ -217,28 +207,28 @@ class AdminService {
   }
 
   // Gestion des catégories
-  async getCategories(): Promise<CategorieAdmin[]> {
+  getCategories = async (): Promise<CategorieAdmin[]> => {
     const response = await axios.get(`${API_URL}/api/admin/categories`, {
       headers: this.getAuthHeaders(),
     });
     return response.data;
   }
 
-  async createCategorie(data: Omit<CategorieAdmin, 'id' | 'created_at' | 'updated_at' | 'nombre_produits'>): Promise<CategorieAdmin> {
+  createCategorie = async (data: Omit<CategorieAdmin, 'id' | 'created_at' | 'updated_at' | 'nombre_produits'>): Promise<CategorieAdmin> => {
     const response = await axios.post(`${API_URL}/api/admin/categories`, data, {
       headers: this.getAuthHeaders(),
     });
     return response.data;
   }
 
-  async updateCategorie(code: string, data: Partial<CategorieAdmin>): Promise<CategorieAdmin> {
+  updateCategorie = async (code: string, data: Partial<CategorieAdmin>): Promise<CategorieAdmin> => {
     const response = await axios.put(`${API_URL}/api/admin/categories/${code}`, data, {
       headers: this.getAuthHeaders(),
     });
     return response.data;
   }
 
-  async deleteCategorie(code: string): Promise<void> {
+  deleteCategorie = async (code: string): Promise<void> => {
     await axios.delete(`${API_URL}/api/admin/categories/${code}`, {
       headers: this.getAuthHeaders(),
     });

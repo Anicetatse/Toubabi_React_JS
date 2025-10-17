@@ -25,43 +25,44 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const skip = (page - 1) * limit;
 
-    // Construire la condition WHERE
-    let whereCondition = '';
-    const conditions = [];
-    
-    if (search) {
-      conditions.push(`(cmd.id LIKE '%${search}%' OR c.nom LIKE '%${search}%' OR c.email LIKE '%${search}%')`);
-    }
-    
-    if (status) {
-      conditions.push(`cmd.statut = '${status}'`);
-    }
-
-    if (conditions.length > 0) {
-      whereCondition = 'WHERE ' + conditions.join(' AND ');
-    }
-
-    // Récupérer le total
-    const totalResult = await prisma.$queryRaw<Array<{ count: bigint }>>`
+    // Construire la requête SQL complète
+    let sqlTotal = `
       SELECT COUNT(*) as count
       FROM commandes cmd
       LEFT JOIN clients c ON cmd.id_client = c.id
-      ${whereCondition ? prisma.$queryRawUnsafe(whereCondition) : prisma.$queryRawUnsafe('')}
     `;
-    const total = Number(totalResult[0]?.count || 0);
 
-    // Récupérer les commandes avec informations clients
-    const commandes = await prisma.$queryRaw<Array<any>>`
+    let sqlCommandes = `
       SELECT 
         cmd.*,
         c.nom as client_nom,
         c.prenom as client_prenom
       FROM commandes cmd
       LEFT JOIN clients c ON cmd.id_client = c.id
-      ${whereCondition ? prisma.$queryRawUnsafe(whereCondition) : prisma.$queryRawUnsafe('')}
-      ORDER BY cmd.created_at DESC
-      LIMIT ${limit} OFFSET ${skip}
     `;
+
+    const conditions = [];
+    if (search) {
+      conditions.push(`(cmd.id LIKE '%${search}%' OR c.nom LIKE '%${search}%' OR c.email LIKE '%${search}%')`);
+    }
+    if (status !== undefined && status !== null) {
+      conditions.push(`cmd.status = ${status}`);
+    }
+
+    if (conditions.length > 0) {
+      const whereClause = ' WHERE ' + conditions.join(' AND ');
+      sqlTotal += whereClause;
+      sqlCommandes += whereClause;
+    }
+
+    sqlCommandes += ` ORDER BY cmd.created_at DESC LIMIT ${limit} OFFSET ${skip}`;
+
+    // Récupérer le total
+    const totalResult = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(sqlTotal);
+    const total = Number(totalResult[0]?.count || 0);
+
+    // Récupérer les commandes
+    const commandes = await prisma.$queryRawUnsafe<Array<any>>(sqlCommandes);
 
     const formattedCommandes = commandes.map((cmd: any) => ({
       id: Number(cmd.id),

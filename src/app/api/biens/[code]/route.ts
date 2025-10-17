@@ -44,19 +44,42 @@ export async function GET(
     const code = params.code;
     console.log('🔍 GET /api/biens/[code] - Code:', code);
 
-    // Récupérer le bien avec SQL brut
-    const query = `
-      SELECT 
-        p.*,
-        c.nom as categorie_nom,
-        c.code as categorie_code
-      FROM produits p
-      LEFT JOIN categories c ON p.code_categorie = c.code
-      WHERE p.code = ? AND p.enabled = 1
-      LIMIT 1
-    `;
+    // Vérifier si c'est un admin (pour voir aussi les biens désactivés)
+    const authHeader = request.headers.get('authorization');
+    let isAdmin = false;
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const decoded = verifyToken(token);
+      if (decoded) {
+        isAdmin = true;
+      }
+    }
+
+    // Récupérer le bien avec SQL brut (sans filtrer par enabled si admin)
+    const query = isAdmin 
+      ? `
+        SELECT 
+          p.*,
+          c.nom as categorie_nom,
+          c.code as categorie_code
+        FROM produits p
+        LEFT JOIN categories c ON p.code_categorie = c.code
+        WHERE p.code = ?
+        LIMIT 1
+      `
+      : `
+        SELECT 
+          p.*,
+          c.nom as categorie_nom,
+          c.code as categorie_code
+        FROM produits p
+        LEFT JOIN categories c ON p.code_categorie = c.code
+        WHERE p.code = ? AND p.enabled = 1
+        LIMIT 1
+      `;
 
     const biens = await prisma.$queryRawUnsafe<any[]>(query, code);
+    console.log('📊 Résultat requête - Nombre de biens trouvés:', biens?.length || 0);
 
     if (!biens || biens.length === 0) {
       return NextResponse.json(

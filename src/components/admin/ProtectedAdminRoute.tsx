@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedAdminRouteProps {
   children: React.ReactNode;
@@ -10,29 +9,33 @@ interface ProtectedAdminRouteProps {
 
 export function ProtectedAdminRoute({ children }: ProtectedAdminRouteProps) {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const [isChecking, setIsChecking] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) {
-      // Si pas authentifié, rediriger vers login
-      if (!isAuthenticated) {
-        router.push('/login?redirect=/admin/dashboard&error=auth_required');
+    // Vérifier l'authentification admin
+    const checkAdminAuth = () => {
+      if (typeof window === 'undefined') return;
+
+      const adminToken = localStorage.getItem('admin_token');
+      const adminUser = localStorage.getItem('admin_user');
+
+      // Si pas de token admin, rediriger vers login admin
+      if (!adminToken || !adminUser) {
+        router.push('/admin/login');
         return;
       }
 
-      // Vérifier si l'utilisateur a les droits admin
-      // Vous pouvez ajuster cette condition selon votre logique métier
-      const isAdmin = user && (user.type_compte === 'admin' || user.email?.includes('admin'));
-      
-      if (!isAdmin) {
-        router.push('/?error=access_denied');
-        return;
-      }
-    }
-  }, [isAuthenticated, isLoading, user, router]);
+      // Token trouvé, autoriser l'accès
+      setIsAuthorized(true);
+      setIsChecking(false);
+    };
+
+    checkAdminAuth();
+  }, [router]);
 
   // Afficher un loader pendant la vérification
-  if (isLoading) {
+  if (isChecking) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-100">
         <div className="text-center">
@@ -43,13 +46,8 @@ export function ProtectedAdminRoute({ children }: ProtectedAdminRouteProps) {
     );
   }
 
-  // Si pas authentifié ou pas admin, ne rien afficher (redirection en cours)
-  if (!isAuthenticated || !user) {
-    return null;
-  }
-
-  const isAdmin = user.type_compte === 'admin' || user.email?.includes('admin');
-  if (!isAdmin) {
+  // Si pas autorisé, ne rien afficher (redirection en cours)
+  if (!isAuthorized) {
     return null;
   }
 

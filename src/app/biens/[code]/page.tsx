@@ -172,7 +172,21 @@ export default function BienDetailPage() {
   const fetchBien = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/biens/${code}`);
+      
+      // Récupérer le token (admin ou client)
+      const adminToken = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
+      const clientToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const token = adminToken || clientToken;
+      
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`/api/biens/${code}`, { headers });
       
       if (!response.ok) {
         throw new Error('Bien non trouvé');
