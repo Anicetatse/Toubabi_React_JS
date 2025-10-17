@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -87,6 +88,8 @@ export default function AdminCommandesPage() {
       return;
     }
     
+    const loadingToast = toast.loading('Suppression en cours...');
+    
     try {
       const response = await fetch(`/api/admin/commandes/${commandeId}`, {
         method: 'DELETE',
@@ -96,13 +99,14 @@ export default function AdminCommandesPage() {
       });
 
       if (response.ok) {
-        window.location.reload();
+        toast.success('Commande supprimée avec succès', { id: loadingToast });
+        setTimeout(() => window.location.reload(), 1000);
       } else {
-        alert('Erreur lors de la suppression de la commande');
+        toast.error('Erreur lors de la suppression de la commande', { id: loadingToast });
       }
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur lors de la suppression de la commande');
+      toast.error('Erreur lors de la suppression de la commande', { id: loadingToast });
     }
   };
 
