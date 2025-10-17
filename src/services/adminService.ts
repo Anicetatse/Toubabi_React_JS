@@ -93,6 +93,29 @@ export interface CategorieAdmin {
   updated_at: string;
 }
 
+export interface AnnonceAdmin {
+  code: string;
+  nom: string;
+  description: string;
+  image?: string; // JSON string avec array d'images
+  prix_vente: string; // Converti en string depuis BigInt
+  surface: number;
+  piece: number;
+  chambre: number;
+  type_annonce: string;
+  enabled: number;
+  client_nom?: string;
+  client_prenom?: string;
+  client_email?: string;
+  client_telephone?: string;
+  commune_nom?: string;
+  quartier_nom?: string;
+  categorie_nom?: string;
+  souscategorie_nom?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
 class AdminService {
   private getAuthHeaders = () => {
     // Utiliser le token admin séparé
@@ -232,6 +255,79 @@ class AdminService {
     await axios.delete(`${API_URL}/api/admin/categories/${code}`, {
       headers: this.getAuthHeaders(),
     });
+  }
+
+  // Méthodes pour la gestion des annonces
+  getAnnonces = async (page: number, limit: number, search: string, status?: string): Promise<{
+    data: AnnonceAdmin[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(search && { search }),
+      ...(status && { status }),
+    });
+
+    const response = await axios.get(`${API_URL}/api/admin/annonces?${params}`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    return response.data;
+  }
+
+  getAnnonceByCode = async (code: string): Promise<AnnonceAdmin> => {
+    const response = await axios.get(`${API_URL}/api/admin/annonces/${code}`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    return response.data.data;
+  }
+
+  updateAnnonceStatus = async (code: string, enabled: number): Promise<void> => {
+    await axios.patch(`${API_URL}/api/admin/annonces/${code}`, {
+      enabled,
+    }, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateAnnonce = async (code: string, data: {
+    nom: string;
+    description: string;
+    prix_vente: string;
+    surface: number;
+    piece: number;
+    chambre: number;
+    type_annonce: string;
+  }): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/annonces/${code}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteAnnonce = async (code: string): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/annonces/${code}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  getAnnoncesStats = async (): Promise<{
+    total: number;
+    active: number;
+    inactive: number;
+    thisMonth: number;
+  }> => {
+    const response = await axios.get(`${API_URL}/api/admin/annonces/stats`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    return response.data.data;
   }
 }
 

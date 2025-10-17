@@ -82,7 +82,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       items: [
         { name: 'Catégories', href: '/admin/categories', icon: Tag },
         { name: 'Sous catégories', href: '/admin/sous-categories', icon: Tag },
-        { name: 'Annonces', href: '/admin/biens', icon: Building2 },
+        { name: 'Annonces', href: '/admin/annonces', icon: Building2 },
         { name: 'Commentaire', href: '/admin/commentaires', icon: MessageSquare },
         { name: "Type d'annonces", href: '/admin/type-annonces', icon: FileText },
         { name: 'Caracteristique', href: '/admin/caracteristiques', icon: Tag },

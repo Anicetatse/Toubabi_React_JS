@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminService, DashboardStats, BienAdmin, ClientAdmin, CommandeAdmin, CategorieAdmin } from '@/services/adminService';
+import { adminService, DashboardStats, BienAdmin, ClientAdmin, CommandeAdmin, CategorieAdmin, AnnonceAdmin } from '@/services/adminService';
 import toast from 'react-hot-toast';
 
 // Hook pour les statistiques du dashboard
@@ -245,5 +245,86 @@ export function useDeleteCategorie() {
       const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';
       toast.error(errorMessage, { duration: 5000 });
     },
+  });
+}
+
+// Hook pour la gestion des annonces
+export function useAdminAnnonces(page = 1, limit = 10, search = '', status?: string) {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'annonces', page, limit, search, status],
+    queryFn: () => adminService.getAnnonces(page, limit, search, status),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useAdminAnnonce(code: string) {
+  return useQuery({
+    queryKey: ['admin', 'annonces', code],
+    queryFn: () => adminService.getAnnonceByCode(code),
+    enabled: !!code,
+  });
+}
+
+export function useUpdateAnnonceStatus() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ code, enabled }: { code: string; enabled: number }) =>
+      adminService.updateAnnonceStatus(code, enabled),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'annonces'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+      toast.success('Statut de l\'annonce mis à jour avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour du statut');
+    },
+  });
+}
+
+export function useUpdateAnnonce() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ code, data }: { code: string; data: any }) => adminService.updateAnnonce(code, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'annonces'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+      toast.success('Annonce mise à jour avec succès');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la mise à jour';
+      toast.error(errorMessage, { duration: 5000 });
+    },
+  });
+}
+
+export function useDeleteAnnonce() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (code: string) => adminService.deleteAnnonce(code),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'annonces'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+      toast.success('Annonce supprimée avec succès');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';
+      toast.error(errorMessage, { duration: 5000 });
+    },
+  });
+}
+
+export function useAnnoncesStats() {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'annonces', 'stats'],
+    queryFn: adminService.getAnnoncesStats,
+    enabled: isAuthenticated,
+    refetchInterval: 30000, // Refetch toutes les 30 secondes
   });
 }
