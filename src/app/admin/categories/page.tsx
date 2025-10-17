@@ -190,6 +190,7 @@ export default function AdminCategoriesPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
+            <h1 className="text-3xl font-bold text-gray-900">Gestion des Catégories</h1>
             <p className="text-gray-600">
               Gérez toutes les catégories de biens immobiliers
             </p>
@@ -394,53 +395,72 @@ export default function AdminCategoriesPage() {
 
         {/* Dialog de création */}
         <Dialog open={createDialog} onOpenChange={setCreateDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nouvelle Catégorie</DialogTitle>
-              <DialogDescription>
+          <DialogContent className="sm:max-w-[550px]">
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <Tag className="h-5 w-5 text-red-600" />
+                </div>
+                Nouvelle Catégorie
+              </DialogTitle>
+              <DialogDescription className="text-base text-gray-600">
                 Créez une nouvelle catégorie de biens immobiliers
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-5 py-2">
               <div className="space-y-2">
-                <Label htmlFor="nom">Nom de la catégorie *</Label>
+                <Label htmlFor="nom" className="text-sm font-semibold text-gray-700">
+                  Nom de la catégorie *
+                </Label>
                 <Input
                   id="nom"
                   value={formData.nom}
                   onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                  placeholder="Ex: Appartement, Villa, Terrain..."
+                  placeholder="Saisissez le nom de la catégorie"
+                  className="h-11"
                 />
               </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="enabled"
-                  checked={formData.enabled}
-                  onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-                  className="rounded"
-                />
-                <Label htmlFor="enabled">Catégorie active</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="pro"
-                  checked={formData.pro}
-                  onChange={(e) => setFormData({ ...formData, pro: e.target.checked })}
-                  className="rounded"
-                />
-                <Label htmlFor="pro">Catégorie professionnelle</Label>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="enabled"
+                    checked={formData.enabled}
+                    onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                  <Label htmlFor="enabled" className="text-sm font-medium cursor-pointer">
+                    Catégorie active
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="pro"
+                    checked={formData.pro}
+                    onChange={(e) => setFormData({ ...formData, pro: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                  <Label htmlFor="pro" className="text-sm font-medium cursor-pointer">
+                    Catégorie professionnelle
+                  </Label>
+                </div>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setCreateDialog(false)}>
+            <DialogFooter className="gap-2 sm:gap-0 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setCreateDialog(false)}
+                className="px-6"
+              >
                 Annuler
               </Button>
               <Button 
                 onClick={handleCreate}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-red-600 hover:bg-red-700 px-6"
                 disabled={!formData.nom || createMutation.isPending}
               >
+                <Plus className="h-4 w-4 mr-2" />
                 Créer
               </Button>
             </DialogFooter>
@@ -449,10 +469,15 @@ export default function AdminCategoriesPage() {
 
         {/* Dialog d'édition */}
         <Dialog open={editDialog.open} onOpenChange={(open: boolean) => setEditDialog({ open })}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Modifier la Catégorie</DialogTitle>
-              <DialogDescription>
+          <DialogContent className="sm:max-w-[550px]">
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Edit className="h-5 w-5 text-blue-600" />
+                </div>
+                Modifier la Catégorie
+              </DialogTitle>
+              <DialogDescription className="text-base text-gray-600">
                 Modifiez les informations de la catégorie
               </DialogDescription>
             </DialogHeader>
@@ -463,38 +488,51 @@ export default function AdminCategoriesPage() {
                   id="edit-nom"
                   value={formData.nom}
                   onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                  placeholder="Saisissez le nom de la catégorie"
+                  className="h-11"
                 />
               </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="edit-enabled"
-                  checked={formData.enabled}
-                  onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-                  className="rounded"
-                />
-                <Label htmlFor="edit-enabled">Catégorie active</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="edit-pro"
-                  checked={formData.pro}
-                  onChange={(e) => setFormData({ ...formData, pro: e.target.checked })}
-                  className="rounded"
-                />
-                <Label htmlFor="edit-pro">Catégorie professionnelle</Label>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="edit-enabled"
+                    checked={formData.enabled}
+                    onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                  <Label htmlFor="edit-enabled" className="text-sm font-medium cursor-pointer">
+                    Catégorie active
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <input
+                    type="checkbox"
+                    id="edit-pro"
+                    checked={formData.pro}
+                    onChange={(e) => setFormData({ ...formData, pro: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                  <Label htmlFor="edit-pro" className="text-sm font-medium cursor-pointer">
+                    Catégorie professionnelle
+                  </Label>
+                </div>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditDialog({ open: false })}>
+            <DialogFooter className="gap-2 sm:gap-0 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setEditDialog({ open: false })}
+                className="px-6"
+              >
                 Annuler
               </Button>
               <Button 
                 onClick={handleUpdate}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-blue-600 hover:bg-blue-700 px-6"
                 disabled={!formData.nom || updateMutation.isPending}
               >
+                <Edit className="h-4 w-4 mr-2" />
                 Enregistrer
               </Button>
             </DialogFooter>
