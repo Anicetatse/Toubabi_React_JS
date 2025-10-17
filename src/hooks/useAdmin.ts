@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminService, DashboardStats, BienAdmin, ClientAdmin, CommandeAdmin, CategorieAdmin, AnnonceAdmin, CommentaireAdmin } from '@/services/adminService';
+import { adminService, DashboardStats, BienAdmin, ClientAdmin, CommandeAdmin, CategorieAdmin, AnnonceAdmin, CommentaireAdmin, TypeAnnonceAdmin, CaracteristiqueAdmin } from '@/services/adminService';
 import toast from 'react-hot-toast';
 
 // Hook pour les statistiques du dashboard
@@ -380,5 +380,139 @@ export function useCommentairesStats() {
     queryFn: adminService.getCommentairesStats,
     enabled: isAuthenticated,
     refetchInterval: 30000, // Refetch toutes les 30 secondes
+  });
+}
+
+// Hook pour la gestion des types d'annonces
+export function useTypeAnnonces() {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'type-annonces'],
+    queryFn: adminService.getTypeAnnonces,
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateTypeAnnonce() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: { nom: string; description: string }) => 
+      adminService.createTypeAnnonce(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'type-annonces'] });
+      toast.success('Type d\'annonce créé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateTypeAnnonce() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { nom: string; description: string } }) =>
+      adminService.updateTypeAnnonce(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'type-annonces'] });
+      toast.success('Type d\'annonce mis à jour avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour');
+    },
+  });
+}
+
+export function useDeleteTypeAnnonce() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: string) => adminService.deleteTypeAnnonce(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'type-annonces'] });
+      toast.success('Type d\'annonce supprimé avec succès');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';
+      toast.error(errorMessage, { duration: 5000 });
+    },
+  });
+}
+
+// Hook pour la gestion des caractéristiques
+export function useCaracteristiques() {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'caracteristiques'],
+    queryFn: adminService.getCaracteristiques,
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateCaracteristique() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: { nom: string }) => 
+      adminService.createCaracteristique(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'caracteristiques'] });
+      toast.success('Caractéristique créée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateCaracteristique() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { nom: string } }) =>
+      adminService.updateCaracteristique(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'caracteristiques'] });
+      toast.success('Caractéristique mise à jour avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour');
+    },
+  });
+}
+
+export function useUpdateCaracteristiqueStatus() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, active }: { id: string; active: number }) =>
+      adminService.updateCaracteristiqueStatus(id, active),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'caracteristiques'] });
+      toast.success('Statut de la caractéristique mis à jour avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour du statut');
+    },
+  });
+}
+
+export function useDeleteCaracteristique() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: string) => adminService.deleteCaracteristique(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'caracteristiques'] });
+      toast.success('Caractéristique supprimée avec succès');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';
+      toast.error(errorMessage, { duration: 5000 });
+    },
   });
 }

@@ -131,6 +131,22 @@ export interface CommentaireAdmin {
   updated_at: string | null;
 }
 
+export interface TypeAnnonceAdmin {
+  id: string;
+  nom: string;
+  description: string;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface CaracteristiqueAdmin {
+  id: string;
+  nom: string;
+  active: number;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 class AdminService {
   private getAuthHeaders = () => {
     // Utiliser le token admin séparé
@@ -398,6 +414,68 @@ class AdminService {
     });
 
     return response.data;
+  }
+
+  // Méthodes pour la gestion des types d'annonces
+  getTypeAnnonces = async (): Promise<TypeAnnonceAdmin[]> => {
+    const response = await axios.get(`${API_URL}/api/admin/type-annonces`, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data.data;
+  }
+
+  createTypeAnnonce = async (data: { nom: string; description: string }): Promise<TypeAnnonceAdmin> => {
+    const response = await axios.post(`${API_URL}/api/admin/type-annonces`, data, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data.data;
+  }
+
+  updateTypeAnnonce = async (id: string, data: { nom: string; description: string }): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/type-annonces/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteTypeAnnonce = async (id: string): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/type-annonces/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Méthodes pour la gestion des caractéristiques
+  getCaracteristiques = async (): Promise<CaracteristiqueAdmin[]> => {
+    const response = await axios.get(`${API_URL}/api/admin/caracteristiques`, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data.data;
+  }
+
+  createCaracteristique = async (data: { nom: string }): Promise<CaracteristiqueAdmin> => {
+    const response = await axios.post(`${API_URL}/api/admin/caracteristiques`, data, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data.data;
+  }
+
+  updateCaracteristique = async (id: string, data: { nom: string }): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/caracteristiques/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateCaracteristiqueStatus = async (id: string, active: number): Promise<void> => {
+    await axios.patch(`${API_URL}/api/admin/caracteristiques/${id}`, {
+      active,
+    }, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteCaracteristique = async (id: string): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/caracteristiques/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
   }
 }
 
