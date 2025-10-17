@@ -66,6 +66,34 @@ export interface ClientAdmin {
   updated_at: string;
 }
 
+export interface AdminUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  email_verified: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  guard_name: string;
+  permissions_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Permission {
+  id: number;
+  name: string;
+  guard_name: string;
+  roles_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CommandeAdmin {
   id: number;
   numero_commande: string;
@@ -617,6 +645,102 @@ class AdminService {
 
   deleteQuartier = async (id: string): Promise<void> => {
     await axios.delete(`${API_URL}/api/admin/quartiers/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Méthodes pour la gestion des utilisateurs admin
+  getAdminUsers = async (page = 1, limit = 10, search = ''): Promise<{ users: AdminUser[]; total: number }> => {
+    const response = await axios.get(`${API_URL}/api/admin/users`, {
+      headers: this.getAuthHeaders(),
+      params: { page, limit, search },
+    });
+    return response.data;
+  }
+
+  createAdminUser = async (data: { name: string; email: string; password: string; role: string }): Promise<AdminUser> => {
+    const response = await axios.post(`${API_URL}/api/admin/users`, data, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  updateAdminUser = async (id: number, data: { name: string; email: string; password?: string; role: string }): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/users/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteAdminUser = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/users/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Méthodes pour la gestion des rôles
+  getRoles = async (): Promise<{ roles: Role[] }> => {
+    const response = await axios.get(`${API_URL}/api/admin/roles`, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  getRole = async (id: number): Promise<{ role: Role & { permissions: Permission[] } }> => {
+    const response = await axios.get(`${API_URL}/api/admin/roles/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  createRole = async (data: { name: string; guard_name?: string }): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/roles`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateRole = async (id: number, data: { name: string }): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/roles/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteRole = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/roles/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateRolePermissions = async (roleId: number, permissionIds: number[]): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/roles/${roleId}/permissions`, 
+      { permissionIds },
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
+  }
+
+  // Méthodes pour la gestion des permissions
+  getPermissions = async (): Promise<{ permissions: Permission[] }> => {
+    const response = await axios.get(`${API_URL}/api/admin/permissions`, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  createPermission = async (data: { name: string; guard_name?: string }): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/permissions`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updatePermission = async (id: number, data: { name: string }): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/permissions/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deletePermission = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/permissions/${id}`, {
       headers: this.getAuthHeaders(),
     });
   }

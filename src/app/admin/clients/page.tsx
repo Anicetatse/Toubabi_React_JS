@@ -204,7 +204,7 @@ export default function AdminClientsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestion des Utilisateurs</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Gestion des annonceurs</h1>
           <p className="text-gray-600">
             Gérez tous les utilisateurs de la plateforme
           </p>

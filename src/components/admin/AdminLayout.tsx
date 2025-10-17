@@ -104,8 +104,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       title: 'Paramètres utilisateurs',
       icon: Users,
       items: [
-        { name: 'Utilisateurs', href: '/admin/clients', icon: Users },
-        { name: 'Admins', href: '/admin/users', icon: Users },
+        { name: 'Annonceurs', href: '/admin/clients', icon: Users },
+        { name: 'Admins', href: '/admin/utilisateurs', icon: Users },
+        { name: 'Rôles', href: '/admin/roles', icon: Settings },
+        { name: 'Permissions', href: '/admin/permissions', icon: Settings },
       ]
     },
     // Mobilité urbaine (lignes 96-106)

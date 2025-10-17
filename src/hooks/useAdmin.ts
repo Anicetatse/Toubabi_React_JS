@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminService, DashboardStats, BienAdmin, ClientAdmin, CommandeAdmin, CategorieAdmin, AnnonceAdmin, CommentaireAdmin, TypeAnnonceAdmin, CaracteristiqueAdmin, VilleAdmin, CommuneAdmin, QuartierAdmin } from '@/services/adminService';
+import { adminService, DashboardStats, BienAdmin, ClientAdmin, CommandeAdmin, CategorieAdmin, AnnonceAdmin, CommentaireAdmin, TypeAnnonceAdmin, CaracteristiqueAdmin, VilleAdmin, CommuneAdmin, QuartierAdmin, AdminUser, Role, Permission } from '@/services/adminService';
 import toast from 'react-hot-toast';
 
 // Hook pour les statistiques du dashboard
@@ -717,6 +717,207 @@ export function useDeleteQuartier() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'quartiers'] });
       toast.success('Quartier supprimé avec succès');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';
+      toast.error(errorMessage, { duration: 5000 });
+    },
+  });
+}
+
+// Hooks pour la gestion des utilisateurs admin
+export function useAdminUsers(page = 1, limit = 10, search = '') {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'users', page, limit, search],
+    queryFn: () => adminService.getAdminUsers(page, limit, search),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateAdminUser() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: { name: string; email: string; password: string; role: string }) =>
+      adminService.createAdminUser(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      toast.success('Administrateur créé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateAdminUser() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { name: string; email: string; password?: string; role: string } }) =>
+      adminService.updateAdminUser(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      toast.success('Administrateur modifié avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeleteAdminUser() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deleteAdminUser(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      toast.success('Administrateur supprimé avec succès');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';
+      toast.error(errorMessage, { duration: 5000 });
+    },
+  });
+}
+
+// Hooks pour la gestion des rôles
+export function useRoles() {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'roles'],
+    queryFn: () => adminService.getRoles(),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useRole(id: number) {
+  return useQuery({
+    queryKey: ['admin', 'roles', id],
+    queryFn: () => adminService.getRole(id),
+    enabled: !!id,
+  });
+}
+
+export function useCreateRole() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: { name: string; guard_name?: string }) =>
+      adminService.createRole(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'roles'] });
+      toast.success('Rôle créé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateRole() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { name: string } }) =>
+      adminService.updateRole(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'roles'] });
+      toast.success('Rôle modifié avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeleteRole() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deleteRole(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'roles'] });
+      toast.success('Rôle supprimé avec succès');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';
+      toast.error(errorMessage, { duration: 5000 });
+    },
+  });
+}
+
+export function useUpdateRolePermissions() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ roleId, permissionIds }: { roleId: number; permissionIds: number[] }) =>
+      adminService.updateRolePermissions(roleId, permissionIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'roles'] });
+      toast.success('Permissions mises à jour avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour');
+    },
+  });
+}
+
+// Hooks pour la gestion des permissions
+export function usePermissions() {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'permissions'],
+    queryFn: () => adminService.getPermissions(),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreatePermission() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: { name: string; guard_name?: string }) =>
+      adminService.createPermission(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'permissions'] });
+      toast.success('Permission créée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdatePermission() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { name: string } }) =>
+      adminService.updatePermission(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'permissions'] });
+      toast.success('Permission modifiée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeletePermission() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deletePermission(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'permissions'] });
+      toast.success('Permission supprimée avec succès');
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';
