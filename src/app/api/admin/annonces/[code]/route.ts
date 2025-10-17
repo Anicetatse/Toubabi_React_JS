@@ -60,43 +60,6 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { code: string } }
-) {
-  try {
-    const { code } = params;
-    const body = await request.json();
-    const { nom, description, prix_vente, surface, piece, chambre, type_annonce } = body;
-
-    await prisma.$executeRawUnsafe(
-      `UPDATE produits 
-       SET nom = ?, description = ?, prix_vente = ?, surface = ?, piece = ?, chambre = ?, type_annonce = ?, updated_at = NOW()
-       WHERE code = ?`,
-      nom,
-      description,
-      prix_vente,
-      surface,
-      piece,
-      chambre,
-      type_annonce,
-      code
-    );
-
-    return NextResponse.json({
-      success: true,
-      message: 'Annonce mise à jour avec succès'
-    });
-
-  } catch (error) {
-    console.error('Erreur API update annonce:', error);
-    return NextResponse.json(
-      { success: false, error: 'Erreur lors de la mise à jour de l\'annonce' },
-      { status: 500 }
-    );
-  }
-}
-
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { code: string } }
@@ -121,6 +84,92 @@ export async function PATCH(
 
   } catch (error) {
     console.error('Erreur API mise à jour annonce:', error);
+    return NextResponse.json(
+      { success: false, error: 'Erreur lors de la mise à jour de l\'annonce' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { code: string } }
+) {
+  try {
+    const { code } = params;
+    const body = await request.json();
+    const { nom, description, prix_vente, surface, piece, chambre, type_annonce, images } = body;
+
+    // Vérifier si l'annonce existe
+    const existingAnnonce = await prisma.$queryRawUnsafe(
+      'SELECT code FROM produits WHERE code = ?',
+      code
+    );
+
+    if (!(existingAnnonce as any).length) {
+      return NextResponse.json(
+        { success: false, error: 'Annonce non trouvée' },
+        { status: 404 }
+      );
+    }
+
+    // Construire la requête de mise à jour
+    const updateFields = [];
+    const updateValues = [];
+
+    if (nom !== undefined) {
+      updateFields.push('nom = ?');
+      updateValues.push(nom);
+    }
+    if (description !== undefined) {
+      updateFields.push('description = ?');
+      updateValues.push(description);
+    }
+    if (prix_vente !== undefined) {
+      updateFields.push('prix_vente = ?');
+      updateValues.push(prix_vente);
+    }
+    if (surface !== undefined) {
+      updateFields.push('surface = ?');
+      updateValues.push(surface);
+    }
+    if (piece !== undefined) {
+      updateFields.push('piece = ?');
+      updateValues.push(piece);
+    }
+    if (chambre !== undefined) {
+      updateFields.push('chambre = ?');
+      updateValues.push(chambre);
+    }
+    if (type_annonce !== undefined) {
+      updateFields.push('type_annonce = ?');
+      updateValues.push(type_annonce);
+    }
+    if (images !== undefined) {
+      updateFields.push('image = ?');
+      updateValues.push(JSON.stringify(images));
+    }
+
+    if (updateFields.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Aucun champ à mettre à jour' },
+        { status: 400 }
+      );
+    }
+
+    updateFields.push('updated_at = NOW()');
+    updateValues.push(code);
+
+    const query = `UPDATE produits SET ${updateFields.join(', ')} WHERE code = ?`;
+    await prisma.$executeRawUnsafe(query, ...updateValues);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Annonce mise à jour avec succès'
+    });
+
+  } catch (error) {
+    console.error('Erreur API mise à jour complète annonce:', error);
     return NextResponse.json(
       { success: false, error: 'Erreur lors de la mise à jour de l\'annonce' },
       { status: 500 }

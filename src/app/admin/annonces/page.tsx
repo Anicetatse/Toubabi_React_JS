@@ -110,7 +110,8 @@ export default function AdminAnnoncesPage() {
     surface: 0,
     piece: 0,
     chambre: 0,
-    type_annonce: 'louer'
+    type_annonce: 'louer',
+    images: [] as string[]
   });
 
   // Fetch data
@@ -194,7 +195,8 @@ export default function AdminAnnoncesPage() {
       surface: annonce.surface,
       piece: annonce.piece,
       chambre: annonce.chambre,
-      type_annonce: annonce.type_annonce
+      type_annonce: annonce.type_annonce,
+      images: parseImages(annonce.image)
     });
     setEditDialog({ open: true, annonce });
   };
@@ -215,7 +217,8 @@ export default function AdminAnnoncesPage() {
           surface: editFormData.surface,
           piece: editFormData.piece,
           chambre: editFormData.chambre,
-          type_annonce: editFormData.type_annonce
+          type_annonce: editFormData.type_annonce,
+          images: editFormData.images
         }
       });
       
@@ -290,9 +293,25 @@ export default function AdminAnnoncesPage() {
     if (!imageString) return [];
     try {
       const images = JSON.parse(imageString);
-      // Convertir les chemins assets/images/annonces en assets/annonces
+      // Convertir les chemins vers le bon dossier public/assets/annonces
       const correctedImages = Array.isArray(images) 
-        ? images.map(img => img.replace('assets/images/annonces', 'assets/annonces'))
+        ? images.map(img => {
+            let correctedImg = img;
+            
+            // Corriger tous les cas possibles vers /assets/annonces/
+            if (img.includes('assets/images/annonces')) {
+              correctedImg = img.replace('assets/images/annonces', 'assets/annonces');
+            } else if (img.includes('/admin/assets/images/annonces/')) {
+              correctedImg = img.replace('/admin/assets/images/annonces/', '/assets/annonces/');
+            } else if (img.includes('/admin/assets/annonces/')) {
+              correctedImg = img.replace('/admin/assets/annonces/', '/assets/annonces/');
+            } else if (img.includes('admin/assets/annonces')) {
+              correctedImg = img.replace('admin/assets/annonces', 'assets/annonces');
+            }
+            
+            // S'assurer que le chemin commence par / pour éviter les problèmes de routage
+            return correctedImg.startsWith('/') ? correctedImg : `/${correctedImg}`;
+          })
         : [];
       return correctedImages;
     } catch {
@@ -680,7 +699,7 @@ export default function AdminAnnoncesPage() {
                       {parseImages(viewDialog.annonce.image).map((img, idx) => (
                         <div key={idx} className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
                           <img 
-                            src={`/${img}`}
+                            src={img}
                             alt={`Image ${idx + 1}`}
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
                             onError={(e) => {
@@ -859,6 +878,110 @@ export default function AdminAnnoncesPage() {
                 </div>
               </div>
 
+              {/* Gestion des images */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <div className="w-1 h-6 bg-orange-600 rounded-full"></div>
+                  Images de l'annonce
+                </h3>
+                
+                <div className="pl-3">
+                  {/* Images existantes */}
+                  {editFormData.images && editFormData.images.length > 0 && (
+                    <div className="space-y-3">
+                      <Label className="text-sm font-semibold text-gray-700">
+                        Images actuelles ({editFormData.images.length})
+                      </Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        {editFormData.images.map((image, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={image}
+                              alt={`Image ${index + 1}`}
+                              className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/placeholder-image.jpg';
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => {
+                                const newImages = editFormData.images.filter((_, i) => i !== index);
+                                setEditFormData({ ...editFormData, images: newImages });
+                              }}
+                            >
+                              ×
+                            </Button>
+                            </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ajouter de nouvelles images */}
+                  <div className="space-y-2 mt-4">
+                    <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4" />
+                      Ajouter des images
+                    </Label>
+                    <div className="flex flex-col gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={async (e) => {
+                          const files = e.target.files;
+                          if (!files || files.length === 0) return;
+
+                          // Créer un FormData pour uploader les images
+                          const formData = new FormData();
+                          Array.from(files).forEach(file => {
+                            formData.append('images', file);
+                          });
+
+                          try {
+                            toast.promise(
+                              fetch('/api/upload-images', {
+                                method: 'POST',
+                                body: formData,
+                              }).then(res => res.json()),
+                              {
+                                loading: 'Upload des images...',
+                                success: (data) => {
+                                  if (data.paths && data.paths.length > 0) {
+                                    setEditFormData({
+                                      ...editFormData,
+                                      images: [...editFormData.images, ...data.paths]
+                                    });
+                                    return `${data.paths.length} image(s) ajoutée(s)`;
+                                  }
+                                  throw new Error('Erreur lors de l\'upload');
+                                },
+                                error: 'Erreur lors de l\'upload des images',
+                              }
+                            );
+                            // Reset le input
+                            e.target.value = '';
+                          } catch (error) {
+                            console.error('Erreur upload:', error);
+                          }
+                        }}
+                        className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      <p className="text-xs text-gray-500">
+                        Sélectionnez une ou plusieurs images (JPG, PNG, etc.)
+                      </p>
+                    </div>
+                  </div>
+
+                 
+                </div>
+              </div>
+
               {/* Prix et type */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -970,7 +1093,7 @@ export default function AdminAnnoncesPage() {
                 type="button"
                 onClick={handleUpdate}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 h-11 text-base font-semibold"
-                disabled={!editFormData.nom || !editFormData.prix_vente || !editFormData.piece || Number(editFormData.prix_vente.replace(/\s/g, '')) <= 0}
+                disabled={!editFormData.nom || !editFormData.prix_vente}
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Enregistrer les modifications

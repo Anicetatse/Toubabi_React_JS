@@ -98,6 +98,7 @@ export interface AnnonceAdmin {
   nom: string;
   description: string;
   image?: string; // JSON string avec array d'images
+  images?: string[]; // Array d'images parsées
   prix_vente: string; // Converti en string depuis BigInt
   surface: number;
   piece: number;
@@ -305,6 +306,7 @@ class AdminService {
     piece: number;
     chambre: number;
     type_annonce: string;
+    images?: string[];
   }): Promise<void> => {
     await axios.put(`${API_URL}/api/admin/annonces/${code}`, data, {
       headers: this.getAuthHeaders(),
