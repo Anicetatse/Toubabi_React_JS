@@ -242,16 +242,13 @@ model sliders {
   updated_at  DateTime?
 }
 
-model contact {
-  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  nom         String   @db.VarChar(255)
-  email       String   @db.VarChar(255)
-  telephone   String?  @db.VarChar(255)
-  sujet       String   @db.VarChar(255)
-  message     String   @db.Text
-  lu          Boolean  @default(false)
-  created_at  DateTime?
-  updated_at  DateTime?
+model contacts {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  name        String    @db.VarChar(255)
+  email       String    @db.VarChar(255)
+  message     String    @db.VarChar(255)
+  created_at  DateTime? @db.Timestamp(0)
+  updated_at  DateTime? @db.Timestamp(0)
 }
 
 model estimes {
