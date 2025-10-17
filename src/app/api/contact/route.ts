@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { sendEmail, getContactAdminTemplate, getAdminEmail } from '@/lib/email';
 
 const prisma = new PrismaClient();
 
@@ -16,9 +17,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Créer la table contacts si elle n'existe pas (à adapter selon votre schéma)
-    // Pour l'instant, on va juste retourner un succès
-    // Dans un vrai projet, vous enregistreriez dans une table contacts ou envoyeriez un email
+    // Envoyer un email à l'admin
+    try {
+      const adminEmail = await getAdminEmail();
+      await sendEmail({
+        to: adminEmail,
+        subject: 'Nouvelle demande de contact - Toubabi',
+        html: getContactAdminTemplate({
+          name: nom,
+          email: email || 'Non fourni',
+          message: `${description}\n\nNuméro: ${numero}\nProduit: ${code_produit}`
+        })
+      });
+      console.log('Email de contact envoyé à l\'admin');
+    } catch (emailError) {
+      console.error('Erreur lors de l\'envoi de l\'email de contact:', emailError);
+      // On continue même si l'email n'a pas pu être envoyé
+    }
 
     console.log('Contact reçu:', { nom, email, numero, description, code_produit, id_client });
 

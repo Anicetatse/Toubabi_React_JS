@@ -22,6 +22,11 @@ export interface LoginResponse {
   user: User;
 }
 
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+}
+
 export const authService = {
   async login(data: LoginData): Promise<LoginResponse> {
     // Déterminer si c'est un email ou un téléphone
@@ -38,12 +43,12 @@ export const authService = {
     return response.data.data!;
   },
 
-  async register(data: RegisterData): Promise<LoginResponse> {
-    const response = await apiClient.post<ApiResponse<LoginResponse>>(
+  async register(data: RegisterData): Promise<RegisterResponse> {
+    const response = await apiClient.post<RegisterResponse>(
       '/auth/register',
       data
     );
-    return response.data.data!;
+    return response.data;
   },
 
   async logout(): Promise<void> {

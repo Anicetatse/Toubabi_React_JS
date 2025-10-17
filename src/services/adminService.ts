@@ -367,7 +367,7 @@ class AdminService {
   }
 
   updateAnnonceStatus = async (code: string, enabled: number): Promise<void> => {
-    await axios.patch(`${API_URL}/api/admin/annonces/${code}`, {
+    await axios.patch(`${API_URL}/api/admin/annonces/${code}/toggle-status`, {
       enabled,
     }, {
       headers: this.getAuthHeaders(),

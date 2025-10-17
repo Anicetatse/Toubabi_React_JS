@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken, extractToken } from '@/lib/auth-utils';
+import { sendEmail, getPatienterTemplate, getNewAnnonceAdminTemplate, getAnnonceValideeTemplate, getAdminEmail } from '@/lib/email';
 import fs from 'fs';
 import path from 'path';
 
@@ -340,6 +341,42 @@ export async function POST(request: NextRequest) {
           VALUES (?, ?, NOW(), NOW())
         `, caracteristiqueId, code);
       }
+    }
+
+    // Récupérer les infos du client pour l'email
+    const clientData = await prisma.clients.findUnique({
+      where: { id: client_owner_id },
+      select: { nom: true, prenom: true, email: true }
+    });
+
+    // Envoyer les emails (au client et à l'admin)
+    try {
+      if (clientData) {
+        // Email au client : annonce en attente de validation
+        await sendEmail({
+          to: clientData.email,
+          subject: 'Annonce en attente de validation - Toubabi',
+          html: getPatienterTemplate({ prenom: clientData.prenom || '', nom: clientData.nom || '' })
+        });
+
+        // Email à l'admin : nouvelle annonce soumise
+        const adminEmail = await getAdminEmail();
+        await sendEmail({
+          to: adminEmail,
+          subject: 'Nouvelle annonce soumise - Toubabi',
+          html: getNewAnnonceAdminTemplate({
+            nom,
+            client: `${clientData.prenom} ${clientData.nom}`,
+            prix: parseInt(prix).toLocaleString('fr-FR'),
+            categorie: categorieNom
+          })
+        });
+
+        console.log('Emails de nouvelle annonce envoyés');
+      }
+    } catch (emailError) {
+      console.error('Erreur lors de l\'envoi des emails d\'annonce:', emailError);
+      // On continue même si l'email n'a pas pu être envoyé
     }
     
     return NextResponse.json({

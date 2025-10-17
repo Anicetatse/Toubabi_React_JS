@@ -1,57 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth-utils';
 
-const prisma = new PrismaClient();
-
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return NextResponse.json({ error: 'Token manquant' }, { status: 401 });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Token invalide' }, { status: 401 });
-    }
-
-    const client = await prisma.clients.findUnique({
-      where: { id: BigInt(params.id) }
-    });
-
-    if (!client) {
-      return NextResponse.json({ error: 'Client introuvable' }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      id: Number(client.id),
-      nom: client.nom,
-      prenom: client.prenom,
-      email: client.email,
-      telephone: client.telephone || '',
-      role: client.type_compte,
-      enabled: Boolean(client.enabled),
-      created_at: client.created_at ? client.created_at.toISOString() : new Date().toISOString(),
-      updated_at: client.updated_at ? client.updated_at.toISOString() : new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Erreur:', error);
-    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
-  }
-}
-
+// PUT - Modifier un client
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // Vérifier l'authentification
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
     if (!token) {
       return NextResponse.json({ error: 'Token manquant' }, { status: 401 });
@@ -62,46 +19,75 @@ export async function PUT(
       return NextResponse.json({ error: 'Token invalide' }, { status: 401 });
     }
 
-    const data = await request.json();
+    const clientId = parseInt(params.id);
+    const body = await request.json();
+    const { nom, prenom, email, telephone, type_compte } = body;
 
-    const client = await prisma.clients.update({
-      where: { id: BigInt(params.id) },
+    // Validation
+    if (!nom || !prenom || !email) {
+      return NextResponse.json(
+        { error: 'Le nom, prénom et email sont requis' },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier si le client existe
+    const client = await prisma.clients.findUnique({
+      where: { id: clientId }
+    });
+
+    if (!client) {
+      return NextResponse.json({ error: 'Client non trouvé' }, { status: 404 });
+    }
+
+    // Vérifier si l'email est déjà utilisé par un autre client
+    if (email !== client.email) {
+      const existingClient = await prisma.clients.findUnique({
+        where: { email }
+      });
+
+      if (existingClient && existingClient.id !== clientId) {
+        return NextResponse.json(
+          { error: 'Cet email est déjà utilisé par un autre client' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Mettre à jour le client
+    await prisma.clients.update({
+      where: { id: clientId },
       data: {
-        nom: data.nom,
-        prenom: data.prenom,
-        email: data.email,
-        telephone: data.telephone,
-        type_compte: data.role,
-        enabled: data.enabled,
+        nom,
+        prenom,
+        email,
+        telephone: telephone || null,
+        type_compte: type_compte || client.type_compte,
         updated_at: new Date()
       }
     });
 
     return NextResponse.json({
-      id: Number(client.id),
-      nom: client.nom,
-      prenom: client.prenom,
-      email: client.email,
-      telephone: client.telephone || '',
-      role: client.type_compte,
-      enabled: Boolean(client.enabled),
-      created_at: client.created_at ? client.created_at.toISOString() : new Date().toISOString(),
-      updated_at: client.updated_at ? client.updated_at.toISOString() : new Date().toISOString()
+      success: true,
+      message: 'Client modifié avec succès'
     });
 
   } catch (error) {
-    console.error('Erreur:', error);
-    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+    console.error('Erreur lors de la modification du client:', error);
+    return NextResponse.json(
+      { error: 'Erreur lors de la modification du client' },
+      { status: 500 }
+    );
   }
 }
 
+// DELETE - Supprimer un client
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // Vérifier l'authentification
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
     if (!token) {
       return NextResponse.json({ error: 'Token manquant' }, { status: 401 });
@@ -112,62 +98,32 @@ export async function DELETE(
       return NextResponse.json({ error: 'Token invalide' }, { status: 401 });
     }
 
-    await prisma.clients.delete({
-      where: { id: BigInt(params.id) }
+    const clientId = parseInt(params.id);
+
+    // Vérifier si le client existe
+    const client = await prisma.clients.findUnique({
+      where: { id: clientId }
     });
 
-    return NextResponse.json({ message: 'Client supprimé avec succès' });
-
-  } catch (error) {
-    console.error('Erreur:', error);
-    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
-  }
-}
-
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return NextResponse.json({ error: 'Token manquant' }, { status: 401 });
+    if (!client) {
+      return NextResponse.json({ error: 'Client non trouvé' }, { status: 404 });
     }
 
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Token invalide' }, { status: 401 });
-    }
-
-    const { enabled } = await request.json();
-
-    const client = await prisma.clients.update({
-      where: { id: BigInt(params.id) },
-      data: {
-        enabled: enabled,
-        updated_at: new Date()
-      }
+    // Supprimer le client (ou soft delete selon votre logique)
+    await prisma.clients.delete({
+      where: { id: clientId }
     });
 
     return NextResponse.json({
-      id: Number(client.id),
-      nom: client.nom,
-      prenom: client.prenom,
-      email: client.email,
-      telephone: client.telephone || '',
-      role: client.type_compte,
-      enabled: Boolean(client.enabled),
-      created_at: client.created_at ? client.created_at.toISOString() : new Date().toISOString(),
-      updated_at: client.updated_at ? client.updated_at.toISOString() : new Date().toISOString()
+      success: true,
+      message: 'Client supprimé avec succès'
     });
 
   } catch (error) {
-    console.error('Erreur:', error);
-    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+    console.error('Erreur lors de la suppression du client:', error);
+    return NextResponse.json(
+      { error: 'Erreur lors de la suppression du client' },
+      { status: 500 }
+    );
   }
 }
-

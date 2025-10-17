@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, generateToken } from '@/lib/auth-utils';
+import { sendEmail, getPatienterTemplate, getNewUserAdminTemplate, getAdminEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Créer le client
+    // Créer le client (désactivé par défaut, en attente de validation admin)
     const hashedPassword = await hashPassword(password);
     
     const client = await prisma.clients.create({
@@ -52,33 +53,44 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         telephone,
         type_compte,
-        enabled: true,
+        enabled: false, // Compte désactivé par défaut
         created_at: new Date(),
         updated_at: new Date(),
       },
     });
 
-    // Générer le token
-    const token = generateToken({
-      userId: client.id.toString(),
-      email: client.email,
-    });
+    // Envoyer les emails (au client et à l'admin)
+    try {
+      // Email au client : compte en attente
+      await sendEmail({
+        to: client.email,
+        subject: 'Demande de création de compte - Toubabi',
+        html: getPatienterTemplate({ prenom: client.prenom || '', nom: client.nom || '' })
+      });
 
-    // Retourner les données utilisateur (sans le mot de passe)
-    const userData = {
-      id: Number(client.id),
-      nom: client.nom,
-      prenom: client.prenom,
-      email: client.email,
-      telephone: client.telephone,
-      type_compte: client.type_compte,
-    };
+      // Email à l'admin : nouvelle inscription
+      const adminEmail = await getAdminEmail();
+      await sendEmail({
+        to: adminEmail,
+        subject: 'Nouvelle demande d\'inscription - Toubabi',
+        html: getNewUserAdminTemplate({
+          fullname: `${client.prenom} ${client.nom}`,
+          email: client.email,
+          telephone: client.telephone || '',
+          type_compte: client.type_compte || 'client'
+        })
+      });
 
+      console.log('Emails d\'inscription envoyés');
+    } catch (emailError) {
+      console.error('Erreur lors de l\'envoi des emails d\'inscription:', emailError);
+      // On continue même si l'email n'a pas pu être envoyé
+    }
+
+    // NE PAS connecter automatiquement - Le compte doit être validé par l'admin
     return NextResponse.json({
-      data: {
-        token,
-        user: userData,
-      },
+      success: true,
+      message: 'Inscription réussie ! Votre compte est en attente d\'activation. Vous recevrez un email dès que votre compte sera activé par un administrateur.'
     });
   } catch (error: any) {
     console.error('Erreur lors de l\'inscription:', error);

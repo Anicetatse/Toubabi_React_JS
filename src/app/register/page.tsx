@@ -64,21 +64,22 @@ export default function RegisterPage() {
 
   const registerMutation = useMutation({
     mutationFn: authService.register,
-    onSuccess: (data) => {
-      login(data.token, data.user);
-      toast.success(`Compte créé avec succès ! Bienvenue ${data.user.prenom} 🎉`, {
-        icon: '✅',
-        duration: 4000,
+    onSuccess: (response) => {
+      // Ne pas connecter automatiquement - Compte en attente de validation
+      toast.success('Inscription réussie ! Votre compte est en attente de validation par un administrateur. Vous recevrez un email dès qu\'il sera activé.', {
+        icon: '⏳',
+        duration: 10000,
         style: {
-          background: '#dcfce7',
-          color: '#15803d',
-          border: '2px solid #22c55e',
+          background: '#fef3c7',
+          color: '#92400e',
+          border: '2px solid #f59e0b',
           fontWeight: '600',
+          fontSize: '14px',
         },
       });
       setTimeout(() => {
-        router.push('/mon-espace/dashboard');
-      }, 500);
+        router.push('/');
+      }, 2000);
     },
     onError: (err: any) => {
       const message = err.response?.data?.message || 'Une erreur est survenue lors de l\'inscription';
@@ -93,6 +94,9 @@ export default function RegisterPage() {
           fontWeight: '600',
         },
       });
+      // Réinitialiser le captcha en cas d'erreur
+      recaptchaRef.current?.reset();
+      setCaptchaValue(null);
     },
   });
 
