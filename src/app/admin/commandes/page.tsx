@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { Pagination } from '@/components/admin/Pagination';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,10 @@ import {
   CheckCircle,
   XCircle,
   MoreHorizontal,
-  Trash2
+  Trash2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { useAdminCommandes, useUpdateCommandeStatus } from '@/hooks/useAdmin';
 import { formatPrice } from '@/lib/utils';
@@ -45,6 +49,8 @@ export default function AdminCommandesPage() {
   const [searchInput, setSearchInput] = useState('');
   const [statusFilter, setStatusFilter] = useState<number | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<'id' | 'nom' | 'email' | 'status' | 'created_at'>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const itemsPerPage = 10;
 
   // Charger toutes les commandes (limite élevée pour avoir toutes les données)
@@ -56,6 +62,16 @@ export default function AdminCommandesPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchInput, statusFilter]);
+
+  // Fonction de tri
+  const handleSort = (field: 'id' | 'nom' | 'email' | 'status' | 'created_at') => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
 
   // Filtrer les commandes côté client (sans actualiser la page)
   const filteredCommandes = commandesData?.commandes.filter(commande => {
@@ -73,11 +89,26 @@ export default function AdminCommandesPage() {
     return matchSearch && matchStatus;
   }) || [];
 
-  // Pagination côté client sur les données filtrées
-  const totalPages = Math.ceil(filteredCommandes.length / itemsPerPage);
+  // Trier les commandes
+  const sortedCommandes = [...filteredCommandes].sort((a, b) => {
+    let aValue: any = a[sortField];
+    let bValue: any = b[sortField];
+
+    if (sortField === 'created_at') {
+      aValue = new Date(a.created_at).getTime();
+      bValue = new Date(b.created_at).getTime();
+    }
+
+    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // Pagination côté client sur les données triées
+  const totalPages = Math.ceil(sortedCommandes.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedCommandes = filteredCommandes.slice(startIndex, endIndex);
+  const paginatedCommandes = sortedCommandes.slice(startIndex, endIndex);
 
   const handleStatusChange = (commandeId: number, newStatus: number) => {
     updateStatusMutation.mutate({ id: commandeId, status: newStatus });
@@ -266,12 +297,62 @@ export default function AdminCommandesPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">N° Commande</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Client</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Contact</th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('id')}
+                    >
+                      <div className="flex items-center gap-2">
+                        N° Commande
+                        {sortField === 'id' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('nom')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Client
+                        {sortField === 'nom' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('email')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Contact
+                        {sortField === 'email' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Bien</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Statut</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Date</th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('status')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Statut
+                        {sortField === 'status' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('created_at')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Date
+                        {sortField === 'created_at' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
                   </tr>
                 </thead>
@@ -290,10 +371,10 @@ export default function AdminCommandesPage() {
                               })}
                             </p>
                           </div>
-                        </td>
+                      </td>
                         <td className="py-4 px-4">
                           <p className="text-sm text-gray-900 font-medium">{commande.nom}</p>
-                        </td>
+                      </td>
                         <td className="py-4 px-4">
                           <div>
                             <p className="text-sm text-gray-900">{commande.email || 'N/A'}</p>
@@ -324,7 +405,7 @@ export default function AdminCommandesPage() {
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm">
                                 <MoreHorizontal className="h-4 w-4" />
-                              </Button>
+                            </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild>
@@ -370,29 +451,15 @@ export default function AdminCommandesPage() {
               </table>
             </div>
 
-            {/* Pagination */}
-            {filteredCommandes.length > itemsPerPage && (
-              <div className="flex justify-center items-center gap-2 mt-6">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Précédent
-                </Button>
-                <span className="text-sm text-gray-600">
-                  Page {currentPage} sur {totalPages} ({filteredCommandes.length} résultat{filteredCommandes.length > 1 ? 's' : ''})
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage >= totalPages}
-                >
-                  Suivant
-                </Button>
-              </div>
+            {/* Pagination Pro */}
+            {sortedCommandes.length > itemsPerPage && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={sortedCommandes.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+              />
             )}
           </CardContent>
         </Card>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { Pagination } from '@/components/admin/Pagination';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,10 @@ import {
   Heart,
   User,
   Calendar,
-  Trash2
+  Trash2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 
 interface Wishlist {
@@ -32,6 +36,8 @@ export default function AdminWishlistsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortField, setSortField] = useState<'client_nom' | 'produit_nom' | 'created_at'>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -88,6 +94,16 @@ export default function AdminWishlistsPage() {
     }
   };
 
+  // Fonction de tri
+  const handleSort = (field: 'client_nom' | 'produit_nom' | 'created_at') => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
   // Filtrer les favoris côté client
   const filteredWishlists = wishlists.filter(wishlist => {
     const searchLower = searchInput.toLowerCase();
@@ -97,11 +113,26 @@ export default function AdminWishlistsPage() {
       wishlist.code_produit?.toLowerCase().includes(searchLower);
   });
 
+  // Trier les favoris
+  const sortedWishlists = [...filteredWishlists].sort((a, b) => {
+    let aValue: any = a[sortField];
+    let bValue: any = b[sortField];
+
+    if (sortField === 'created_at') {
+      aValue = new Date(a.created_at).getTime();
+      bValue = new Date(b.created_at).getTime();
+    }
+
+    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   // Pagination côté client
-  const totalPages = Math.ceil(filteredWishlists.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedWishlists.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedWishlists = filteredWishlists.slice(startIndex, endIndex);
+  const paginatedWishlists = sortedWishlists.slice(startIndex, endIndex);
 
   // Réinitialiser la page quand on filtre
   useEffect(() => {
@@ -188,9 +219,39 @@ export default function AdminWishlistsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Client</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Bien</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Date d'ajout</th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('client_nom')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Client
+                        {sortField === 'client_nom' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('produit_nom')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Bien
+                        {sortField === 'produit_nom' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('created_at')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Date d'ajout
+                        {sortField === 'created_at' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
                   </tr>
                 </thead>
@@ -252,29 +313,15 @@ export default function AdminWishlistsPage() {
               </table>
             </div>
 
-            {/* Pagination */}
-            {filteredWishlists.length > itemsPerPage && (
-              <div className="flex justify-center items-center gap-2 mt-6">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Précédent
-                </Button>
-                <span className="text-sm text-gray-600">
-                  Page {currentPage} sur {totalPages} ({filteredWishlists.length} résultat{filteredWishlists.length > 1 ? 's' : ''})
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage >= totalPages}
-                >
-                  Suivant
-                </Button>
-              </div>
+            {/* Pagination Pro */}
+            {sortedWishlists.length > itemsPerPage && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={sortedWishlists.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+              />
             )}
           </CardContent>
         </Card>

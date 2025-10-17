@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { Pagination } from '@/components/admin/Pagination';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,10 @@ import {
   Trash2,
   MessageCircle,
   CheckCircle,
-  Circle
+  Circle,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import {
   Dialog,
@@ -41,6 +45,8 @@ export default function AdminContactPage() {
   const [loading, setLoading] = useState(true);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [showDialog, setShowDialog] = useState(false);
+  const [sortField, setSortField] = useState<'name' | 'email' | 'created_at'>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -102,6 +108,16 @@ export default function AdminContactPage() {
     }
   };
 
+  // Fonction de tri
+  const handleSort = (field: 'name' | 'email' | 'created_at') => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
   // Filtrer les contacts côté client
   const filteredContacts = contacts.filter(contact => {
     const searchLower = searchInput.toLowerCase();
@@ -111,11 +127,26 @@ export default function AdminContactPage() {
       contact.message?.toLowerCase().includes(searchLower);
   });
 
+  // Trier les contacts
+  const sortedContacts = [...filteredContacts].sort((a, b) => {
+    let aValue: any = a[sortField];
+    let bValue: any = b[sortField];
+
+    if (sortField === 'created_at') {
+      aValue = new Date(a.created_at).getTime();
+      bValue = new Date(b.created_at).getTime();
+    }
+
+    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   // Pagination côté client
-  const totalPages = Math.ceil(filteredContacts.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedContacts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedContacts = filteredContacts.slice(startIndex, endIndex);
+  const paginatedContacts = sortedContacts.slice(startIndex, endIndex);
 
   // Réinitialiser la page quand on filtre
   useEffect(() => {
@@ -186,10 +217,40 @@ export default function AdminContactPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Nom</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Email</th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('name')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Nom
+                        {sortField === 'name' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('email')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Email
+                        {sortField === 'email' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Message</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Date & heure</th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('created_at')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Date & heure
+                        {sortField === 'created_at' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
                   </tr>
                 </thead>
@@ -264,29 +325,15 @@ export default function AdminContactPage() {
               </table>
             </div>
 
-            {/* Pagination */}
-            {filteredContacts.length > itemsPerPage && (
-              <div className="flex justify-center items-center gap-2 mt-6">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Précédent
-                </Button>
-                <span className="text-sm text-gray-600">
-                  Page {currentPage} sur {totalPages} ({filteredContacts.length} résultat{filteredContacts.length > 1 ? 's' : ''})
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage >= totalPages}
-                >
-                  Suivant
-                </Button>
-              </div>
+            {/* Pagination Pro */}
+            {sortedContacts.length > itemsPerPage && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={sortedContacts.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+              />
             )}
           </CardContent>
         </Card>
