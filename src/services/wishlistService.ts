@@ -9,10 +9,10 @@ export const wishlistService = {
     return response.data.data!;
   },
 
-  async add(produitId: number): Promise<Wishlist> {
+  async add(produitCode: string): Promise<Wishlist> {
     const response = await apiClient.post<ApiResponse<Wishlist>>(
       '/wishlist',
-      { produit_id: produitId }
+      { produit_id: produitCode }
     );
     return response.data.data!;
   },
@@ -21,10 +21,10 @@ export const wishlistService = {
     await apiClient.delete(`/wishlist/${id}`);
   },
 
-  async toggle(produitId: number): Promise<{ added: boolean }> {
+  async toggle(produitCode: string): Promise<{ added: boolean }> {
     const response = await apiClient.post<ApiResponse<{ added: boolean }>>(
       '/wishlist/toggle',
-      { produit_id: produitId }
+      { produit_id: produitCode }
     );
     return response.data.data!;
   },

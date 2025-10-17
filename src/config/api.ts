@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Configuration de l'API - Utilise les API Routes Next.js
+// Configuration de l'API - Utilise les routes API Next.js
 export const API_URL = '/api';
 
 // Instance Axios configurée

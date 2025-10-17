@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { ProtectedAdminRoute } from './ProtectedAdminRoute';
 import {
   LayoutDashboard,
   Building2,
@@ -17,6 +18,12 @@ import {
   LogOut,
   Package,
   Pill,
+  ChevronDown,
+  ChevronRight,
+  MessageSquare,
+  FileText,
+  Tag,
+  Percent,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -25,9 +32,18 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+
+  const toggleMenu = (menuName: string) => {
+    setExpandedMenus(prev => 
+      prev.includes(menuName) 
+        ? prev.filter(name => name !== menuName)
+        : [...prev, menuName]
+    );
+  };
 
   const navigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -88,12 +104,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     },
     {
       name: 'Communications',
-      icon: Package,
+      icon: MessageSquare,
       subItems: [
         { name: 'Messages contact', href: '/admin/contact' },
         { name: 'Commentaires', href: '/admin/commentaires' },
         { name: 'Estimations', href: '/admin/estimations' },
         { name: 'Wishlists', href: '/admin/wishlists' },
+      ]
+    },
+    {
+      name: 'Promotions',
+      icon: Percent,
+      subItems: [
+        { name: 'Bon de réduction', href: '/admin/bon-reductions' },
       ]
     },
     { name: 'Paramètres', href: '/admin/parametres', icon: Settings },
@@ -104,25 +127,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     router.push('/login');
   };
 
-  // Vérifier si l'utilisateur est admin
-  if (user?.role !== 'admin') {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-red-600">Accès refusé</h1>
-          <p className="mb-4 text-gray-600">
-            Vous n'avez pas les permissions nécessaires pour accéder à cette page.
-          </p>
-          <Button onClick={() => router.push('/')}>
-            Retour à l'accueil
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-100">
+    <ProtectedAdminRoute>
+      <div className="flex h-screen overflow-hidden bg-gray-100">
       {/* Sidebar Mobile */}
       {sidebarOpen && (
         <div
@@ -162,34 +169,46 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 const hasActiveChild = item.subItems.some((sub: any) => 
                   pathname?.startsWith(sub.href)
                 );
+                const isExpanded = expandedMenus.includes(item.name) || hasActiveChild;
+                const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
                 
                 return (
                   <div key={item.name} className="space-y-1">
-                    <div className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium ${
-                      hasActiveChild ? 'text-white' : 'text-gray-300'
-                    }`}>
-                      <Icon className="h-5 w-5" />
-                      {item.name}
-                    </div>
-                    <div className="ml-8 space-y-1">
-                      {item.subItems.map((subItem: any) => {
-                        const isSubActive = pathname === subItem.href;
-                        return (
-                          <Link
-                            key={subItem.href}
-                            href={subItem.href}
-                            className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
-                              isSubActive
-                                ? 'bg-gray-800 text-white'
-                                : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                            }`}
-                            onClick={() => setSidebarOpen(false)}
-                          >
-                            {subItem.name}
-                          </Link>
-                        );
-                      })}
-                    </div>
+                    <button
+                      onClick={() => toggleMenu(item.name)}
+                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                        hasActiveChild 
+                          ? 'bg-gray-800 text-white' 
+                          : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className="h-5 w-5" />
+                        {item.name}
+                      </div>
+                      <ChevronIcon className="h-4 w-4" />
+                    </button>
+                    {isExpanded && (
+                      <div className="ml-8 space-y-1">
+                        {item.subItems.map((subItem: any) => {
+                          const isSubActive = pathname === subItem.href;
+                          return (
+                            <Link
+                              key={subItem.href}
+                              href={subItem.href}
+                              className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
+                                isSubActive
+                                  ? 'bg-red-600 text-white'
+                                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                              }`}
+                              onClick={() => setSidebarOpen(false)}
+                            >
+                              {subItem.name}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               }
@@ -201,7 +220,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   href={item.href!}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-gray-800 text-white'
+                      ? 'bg-red-600 text-white'
                       : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                   }`}
                   onClick={() => setSidebarOpen(false)}
@@ -216,7 +235,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           {/* User info */}
           <div className="border-t border-gray-800 p-4">
             <div className="mb-2 text-sm">
-              <p className="font-medium">{user?.name}</p>
+              <p className="font-medium">{user ? `${user.nom} ${user.prenom}` : 'Utilisateur'}</p>
               <p className="text-gray-400">{user?.email}</p>
             </div>
             <Button
@@ -257,6 +276,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </main>
       </div>
     </div>
+    </ProtectedAdminRoute>
   );
 }
 

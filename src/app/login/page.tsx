@@ -1,23 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { authService } from '@/services/authService';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Mail, Lock } from 'lucide-react';
+import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Header } from '@/components/layout/Header';
+import toast from 'react-hot-toast';
 
 const loginSchema = z.object({
-  email: z.string().email('Email invalide'),
+  identifier: z.string().min(1, 'Email ou téléphone requis'),
   password: z.string().min(1, 'Mot de passe requis'),
 });
 
@@ -28,6 +28,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const redirectUrl = searchParams.get('redirect') || '/mon-espace/dashboard';
 
   const {
@@ -42,10 +43,36 @@ export default function LoginPage() {
     mutationFn: authService.login,
     onSuccess: (data) => {
       login(data.token, data.user);
-      router.push(redirectUrl);
+      toast.success(`Bienvenue ${data.user.prenom} ! Connexion réussie.`, {
+        duration: 3000,
+        style: {
+          background: '#dcfce7',
+          color: '#15803d',
+          border: '2px solid #22c55e',
+          fontWeight: '600',
+        },
+      });
+      setTimeout(() => {
+        router.push(redirectUrl);
+      }, 500);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Une erreur est survenue lors de la connexion');
+      const message = err.response?.data?.message || 'Une erreur est survenue lors de la connexion';
+      const status = err.response?.status;
+      
+      setError(message);
+      
+      // Notification rouge pour les erreurs
+      toast.error(message, {
+        icon: '❌',
+        duration: 5000,
+        style: {
+          background: '#fee2e2',
+          color: '#991b1b',
+          border: '2px solid #ef4444',
+          fontWeight: '600',
+        },
+      });
     },
   });
 
@@ -55,132 +82,154 @@ export default function LoginPage() {
   };
 
   return (
-    <MainLayout>
-      <div className="container mx-auto flex min-h-[calc(100vh-12rem)] items-center justify-center px-4 py-12">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Connexion</CardTitle>
-            <CardDescription>
-              Connectez-vous à votre compte pour accéder à votre espace
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {error && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-                  {error}
-                </div>
-              )}
+    <>
+      <Header />
+      <div className="min-h-screen flex">
+        {/* Section gauche - Formulaire */}
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="w-full max-w-md space-y-8 py-12">
+          {/* En-tête */}
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+              Bon retour !
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Connectez-vous pour accéder à votre espace
+            </p>
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          {/* Formulaire */}
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">
+            {error && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-4 animate-in fade-in slide-in-from-top-2">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-red-800">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-5">
+              <div>
+                <Label htmlFor="identifier" className="block text-sm font-medium text-gray-700 mb-2">
+                  Email ou Téléphone
+                </Label>
+                <div className="relative group">
+                  <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="votre@email.com"
-                    className="pl-10"
-                    {...register('email')}
+                    id="identifier"
+                    type="text"
+                    placeholder="exemple@email.com ou 0707070707"
+                    className="pl-11 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
+                    {...register('identifier')}
                   />
                 </div>
-                {errors.email && (
-                  <p className="text-sm text-red-600">{errors.email.message}</p>
+                {errors.identifier && (
+                  <p className="mt-2 text-sm text-red-600 animate-in fade-in slide-in-from-top-1">
+                    {errors.identifier.message}
+                  </p>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Mot de passe</Label>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                    Mot de passe
+                  </Label>
                   <Link
-                    href="/motdepasse-perdu"
-                    className="text-sm text-blue-600 hover:underline"
+                    href="/mot-de-passe-perdu"
+                    className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
                   >
                     Mot de passe oublié ?
                   </Link>
                 </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <div className="relative group">
+                  <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
                   <Input
                     id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••••"
+                    className="pl-11 pr-11 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
                     {...register('password')}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
                 </div>
                 {errors.password && (
-                  <p className="text-sm text-red-600">{errors.password.message}</p>
+                  <p className="mt-2 text-sm text-red-600 animate-in fade-in slide-in-from-top-1">
+                    {errors.password.message}
+                  </p>
                 )}
               </div>
+            </div>
 
+            <div>
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/50 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/60"
                 disabled={loginMutation.isPending}
               >
                 {loginMutation.isPending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Connexion en cours...
                   </>
                 ) : (
                   'Se connecter'
                 )}
               </Button>
+            </div>
+          </form>
 
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-muted-foreground">
-                    Ou continuer avec
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" type="button" disabled>
-                  <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-                    <path
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      fill="#4285F4"
-                    />
-                    <path
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      fill="#34A853"
-                    />
-                    <path
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                      fill="#FBBC05"
-                    />
-                    <path
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                      fill="#EA4335"
-                    />
-                  </svg>
-                  Google
-                </Button>
-                <Button variant="outline" type="button" disabled>
-                  <svg className="mr-2 h-4 w-4" fill="#1877F2" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                  </svg>
-                  Facebook
-                </Button>
-              </div>
-
-              <div className="text-center text-sm">
-                <span className="text-gray-600">Vous n'avez pas de compte ? </span>
-                <Link href="/register" className="font-medium text-blue-600 hover:underline">
-                  Inscrivez-vous
-                </Link>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+          <p className="text-center text-sm text-gray-600 mt-6">
+            Pas encore de compte ?{' '}
+            <Link 
+              href="/register" 
+              className="font-semibold text-blue-600 hover:text-blue-500 transition-colors"
+            >
+              Inscrivez-vous gratuitement
+            </Link>
+          </p>
+        </div>
       </div>
-    </MainLayout>
+
+      {/* Section droite - Image */}
+      <div className="hidden lg:flex lg:flex-1 relative overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: 'url(/assets/images/gallerie/93813c5260e345f4c76b09cfeef84c68.webp)' }}
+        >
+          {/* Overlay subtil */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-blue-800/30"></div>
+        </div>
+        
+        {/* Texte par-dessus l'image */}
+        <div className="relative z-10 flex flex-col justify-start p-16 text-white">
+          <h1 className="text-4xl font-bold mb-3">
+            Bienvenue sur Toubabi
+          </h1>
+          <p className="text-lg text-white/90">
+            Votre plateforme immobilière de confiance
+          </p>
+        </div>
+      </div>
+    </div>
+    </>
   );
 }
 

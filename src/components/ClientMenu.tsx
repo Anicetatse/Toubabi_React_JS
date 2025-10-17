@@ -78,7 +78,7 @@ export function ClientMenu() {
             {user?.image ? (
               <Image
                 src={user.image}
-                alt={user.name}
+                alt={`${user.prenom} ${user.nom}`}
                 width={80}
                 height={80}
                 className="h-full w-full object-cover"
@@ -89,7 +89,7 @@ export function ClientMenu() {
               </div>
             )}
           </div>
-          <h4 className="font-semibold text-gray-900">{user?.name}</h4>
+          <h4 className="font-semibold text-gray-900">{user?.prenom} {user?.nom}</h4>
           <span className="text-sm text-gray-600">{user?.telephone}</span>
         </div>
 

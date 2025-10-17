@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useToast } from '@/components/Toast';
+import { WishlistButton } from '@/components/WishlistButton';
 
 interface Bien {
   code: string;
@@ -35,6 +36,7 @@ interface Bien {
   description: string;
   prix_vente: number;
   image: string;
+  images?: string[]; // Nouveau format parsé par l'API
   piece: number;
   chambre: number;
   surface: number;
@@ -131,7 +133,6 @@ export default function BienDetailPage() {
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showFullscreenGallery, setShowFullscreenGallery] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
   const { showToast, ToastContainer } = useToast();
 
   // Formulaire de contact
@@ -177,8 +178,8 @@ export default function BienDetailPage() {
         throw new Error('Bien non trouvé');
       }
 
-      const data = await response.json();
-      setBien(data);
+      const result = await response.json();
+      setBien(result.success ? result.data : result);
     } catch (error) {
       console.error('Erreur lors de la récupération du bien:', error);
       showToast('Bien non trouvé', 'error');
@@ -243,8 +244,8 @@ export default function BienDetailPage() {
           try {
             const response = await fetch(`/api/biens/${bien.code}`);
             if (response.ok) {
-              const data = await response.json();
-              setBien(data);
+              const result = await response.json();
+              setBien(result.success ? result.data : result);
             }
           } catch (error) {
             console.error('Erreur lors du rechargement:', error);
@@ -286,24 +287,29 @@ export default function BienDetailPage() {
   // Parse images
   let images: string[] = [];
   try {
-    if (bien.image) {
+    // Si l'API a déjà parsé les images (nouveau format)
+    if (bien.images && Array.isArray(bien.images)) {
+      images = bien.images;
+    }
+    // Sinon, parser l'ancien format
+    else if (bien.image) {
       images = bien.image.startsWith('[') 
         ? JSON.parse(bien.image)
         : [bien.image];
-      
-      // Corriger le chemin et ajouter / au début si nécessaire
-      images = images.map(img => {
-        // Remplacer assets/images/annonces par assets/annonces
-        let correctedImg = img.replace('assets/images/annonces/', 'assets/annonces/');
-        
-        // Ajouter / au début si nécessaire
-        if (!correctedImg.startsWith('http') && !correctedImg.startsWith('/')) {
-          correctedImg = '/' + correctedImg;
-        }
-        
-        return correctedImg;
-      });
     }
+      
+    // Corriger le chemin et ajouter / au début si nécessaire
+    images = images.map(img => {
+      // Remplacer assets/images/annonces par assets/annonces
+      let correctedImg = img.replace('assets/images/annonces/', 'assets/annonces/');
+      
+      // Ajouter / au début si nécessaire
+      if (!correctedImg.startsWith('http') && !correctedImg.startsWith('/')) {
+        correctedImg = '/' + correctedImg;
+      }
+      
+      return correctedImg;
+    });
   } catch (e) {
     images = ['/assets/img/nofound.jpg'];
   }
@@ -880,17 +886,12 @@ export default function BienDetailPage() {
                     <Share2 className="w-5 h-5" />
                     Partager
                   </button>
-                  <button
-                    onClick={() => setIsFavorite(!isFavorite)}
-                    className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all ${
-                      isFavorite
-                        ? 'bg-red-600 text-white'
-                        : 'border-2 border-red-600 text-red-600 hover:bg-red-50'
-                    }`}
-                  >
-                    <Heart className={`w-5 h-5 ${isFavorite ? 'fill-white' : ''}`} />
-                    Favoris
-                  </button>
+                  <WishlistButton
+                    produitCode={code}
+                    variant="outline"
+                    showText={true}
+                    className="!flex !items-center !justify-center !gap-2 !px-4 !py-3 !h-auto !border-2 !rounded-xl !font-normal !bg-transparent !text-red-600 !border-red-600 hover:!bg-red-50 hover:!text-red-700"
+                  />
                 </div>
               </div>
 

@@ -1,35 +1,46 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MainLayout } from '@/components/layout/MainLayout';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { produitService } from '@/services/produitService';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Plus, Edit, Trash2, Eye, Loader2, Package } from 'lucide-react';
+import { Plus, Edit, Eye, Loader2, Package, CheckCircle, Clock, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Header } from '@/components/layout/Header';
+import { ClientMenu } from '@/components/ClientMenu';
+import { ClientTopBar } from '@/components/ClientTopBar';
 
 export default function MesAnnoncesPage() {
-  const queryClient = useQueryClient();
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [statusFilter, setStatusFilter] = React.useState<'all' | 'approved' | 'pending'>('all');
 
-  const { data: annonces = [], isLoading } = useQuery({
-    queryKey: ['my-annonces'],
-    queryFn: produitService.getMine,
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: produitService.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-annonces'] });
+  const { data: response, isLoading } = useQuery({
+    queryKey: ['my-annonces', currentPage, statusFilter],
+    queryFn: async () => {
+      // Appeler l'API directement avec le paramètre de page et filtre
+      const res = await fetch(`/api/client/annonces?page=${currentPage}&status=${statusFilter}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+      const data = await res.json();
+      return data.success ? data.data : { data: [], total: 0, last_page: 1 };
     },
   });
 
-  const handleDelete = (id: number) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) {
-      deleteMutation.mutate(id);
+  const annonces = response?.data || [];
+  const totalAnnonces = response?.total || 0;
+  const totalPages = response?.last_page || 1;
+
+  // Debug: vérifier le format des codes
+  React.useEffect(() => {
+    if (annonces.length > 0) {
+      console.log('Premier code d\'annonce:', annonces[0]?.code);
     }
-  };
+  }, [annonces]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -40,156 +51,362 @@ export default function MesAnnoncesPage() {
   };
 
   return (
-    <MainLayout>
-      <div className="bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Mes annonces</h1>
-              <p className="text-gray-600">
-                Gérez toutes vos annonces immobilières
-              </p>
-            </div>
-            <Button asChild>
-              <Link href="/deposer-annonce">
-                <Plus className="mr-2 h-4 w-4" />
-                Nouvelle annonce
-              </Link>
-            </Button>
-          </div>
-
-          {isLoading ? (
-            <div className="flex min-h-[400px] items-center justify-center">
-              <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-            </div>
-          ) : annonces.length === 0 ? (
-            <Card>
-              <CardContent className="flex min-h-[400px] flex-col items-center justify-center py-12 text-center">
-                <div className="mb-4 text-gray-300">
-                  <Package className="mx-auto h-16 w-16" />
+    <>
+      <Header />
+      <div className="bg-gray-50 min-h-screen">
+        <div className="container mx-auto p-4 lg:p-6">
+          <ClientTopBar />
+        </div>
+        <div className="container mx-auto p-4 lg:p-6">
+          {/* Contenu principal pleine largeur */}
+          <div className="flex-1">
+            {/* En-tête */}
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-bold text-gray-900">Mes annonces</h1>
+                  {!isLoading && totalAnnonces > 0 && (
+                    <Badge variant="secondary" className="text-base px-3 py-1">
+                      {totalAnnonces} annonce{totalAnnonces > 1 ? 's' : ''}
+                    </Badge>
+                  )}
                 </div>
-                <h3 className="mb-2 text-xl font-semibold text-gray-900">
-                  Aucune annonce
-                </h3>
-                <p className="mb-6 text-gray-600">
-                  Vous n'avez pas encore publié d'annonce
+                <p className="text-gray-600 mt-1">
+                  Gérez toutes vos annonces immobilières
                 </p>
-                <Button asChild>
-                  <Link href="/deposer-annonce">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Créer ma première annonce
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 gap-6">
-              {annonces.map((annonce) => {
-                const mainImage =
-                  annonce.images?.[0]?.url || '/placeholder-property.jpg';
-                return (
-                  <Card key={annonce.id}>
+              </div>
+              <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                <Link href="/deposer-annonce">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nouvelle annonce
+                </Link>
+              </Button>
+            </div>
+
+            {/* Filtres par statut */}
+            <div className="mb-6 flex items-center gap-2">
+              <span className="text-sm font-semibold text-gray-700 mr-2">Filtrer par statut :</span>
+              <Button
+                variant={statusFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setStatusFilter('all');
+                  setCurrentPage(1);
+                }}
+                className={statusFilter === 'all' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+              >
+                Toutes ({totalAnnonces})
+              </Button>
+              <Button
+                variant={statusFilter === 'approved' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setStatusFilter('approved');
+                  setCurrentPage(1);
+                }}
+                className={statusFilter === 'approved' ? 'bg-green-600 hover:bg-green-700' : 'border-green-600 text-green-600 hover:bg-green-50'}
+              >
+                <CheckCircle className="mr-1 h-4 w-4" />
+                Approuvées
+              </Button>
+              <Button
+                variant={statusFilter === 'pending' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setStatusFilter('pending');
+                  setCurrentPage(1);
+                }}
+                className={statusFilter === 'pending' ? 'bg-orange-600 hover:bg-orange-700' : 'border-orange-600 text-orange-600 hover:bg-orange-50'}
+              >
+                <Clock className="mr-1 h-4 w-4" />
+                En attente
+              </Button>
+            </div>
+
+            {isLoading ? (
+              <Card>
+                <CardContent className="flex min-h-[400px] items-center justify-center">
+                  <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+                </CardContent>
+              </Card>
+            ) : annonces.length === 0 ? (
+              <Card>
+                <CardContent className="py-20 text-center flex flex-col items-center justify-center">
+                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 mb-8">
+                    <Package className="h-12 w-12 text-blue-600" />
+                  </div>
+                  <h3 className="mb-4 text-3xl font-bold text-gray-900">
+                    Aucune annonce
+                  </h3>
+                  <p className="mb-10 text-lg text-gray-600 max-w-lg mx-auto leading-relaxed">
+                    Vous n'avez pas encore publié d'annonce. Déposez votre première annonce dès maintenant !
+                  </p>
+                  <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all px-8 py-6 text-base">
+                    <Link href="/deposer-annonce">
+                      <Plus className="mr-2 h-5 w-5" />
+                      Déposer ma première annonce
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {annonces.map((annonce: any) => (
+                  <Card key={annonce.code} className="hover:shadow-lg transition-shadow">
                     <CardContent className="p-6">
                       <div className="flex gap-6">
-                        <Link
-                          href={`/biens/${annonce.id}`}
-                          className="relative h-32 w-48 flex-shrink-0 overflow-hidden rounded-lg"
-                        >
-                          <Image
-                            src={mainImage}
-                            alt={annonce.titre}
-                            fill
-                            className="object-cover"
-                          />
-                        </Link>
+                        {/* Image */}
+                        <div className="relative h-32 w-48 flex-shrink-0 overflow-hidden rounded-lg bg-gray-200">
+                          {annonce.image ? (
+                            <Image
+                              src={annonce.image.startsWith('/') ? annonce.image : `/${annonce.image}`}
+                              alt={annonce.nom || ''}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full">
+                              <Package className="h-12 w-12 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
 
-                        <div className="flex flex-1 flex-col justify-between">
+                        {/* Contenu */}
+                        <div className="flex-1 flex flex-col justify-between">
                           <div>
-                            <div className="mb-2 flex items-start justify-between">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                {/* Titre avec catégorie */}
+                                <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                                  {annonce.categorie?.nom || annonce.code_categorie || 'Bien immobilier'}
+                                </h4>
+                                
+                                {/* Prix en évidence */}
+                                <div className="mb-3">
+                                  <span className="text-2xl font-bold text-blue-600">
+                                    {annonce.prix_vente ? formatPrice(annonce.prix_vente) : 'Prix non défini'}
+                                  </span>
+                                </div>
+
+                                {/* Autres informations */}
+                                <div className="space-y-1 text-sm text-gray-600">
+                                  {annonce.surface > 0 && (
+                                    <div>Surface: <strong>{annonce.surface} m²</strong></div>
+                                  )}
+                                  {(annonce.piece > 0 || annonce.chambre > 0) && (
+                                    <div>
+                                      {annonce.piece > 0 && <span>{annonce.piece} pièce{annonce.piece > 1 ? 's' : ''}</span>}
+                                      {annonce.piece > 0 && annonce.chambre > 0 && <span> • </span>}
+                                      {annonce.chambre > 0 && <span>{annonce.chambre} chambre{annonce.chambre > 1 ? 's' : ''}</span>}
+                                    </div>
+                                  )}
+                                  {(annonce.commune?.nom || annonce.quartier?.nom) && (
+                                    <div>
+                                      📍 {annonce.commune?.nom || 'Localisation'}
+                                      {annonce.quartier?.nom && ` - ${annonce.quartier.nom}`}
+                                    </div>
+                                  )}
+                                  <div className="text-xs text-gray-500 mt-2">
+                                    Soumis le {annonce.created_at ? new Date(annonce.created_at).toLocaleDateString('fr-FR') : 'N/A'}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Badge statut */}
                               <div>
-                                <Link
-                                  href={`/biens/${annonce.id}`}
-                                  className="text-xl font-semibold hover:text-blue-600"
-                                >
-                                  {annonce.titre}
-                                </Link>
-                                {annonce.quartier && (
-                                  <p className="mt-1 text-sm text-gray-600">
-                                    {annonce.quartier.nom}
-                                    {annonce.quartier.commune &&
-                                      `, ${annonce.quartier.commune.nom}`}
-                                  </p>
+                                {annonce.enabled === 1 ? (
+                                  <Badge className="bg-green-100 text-green-700 border-green-300">
+                                    <CheckCircle className="mr-1 h-3 w-3" />
+                                    Approuvée
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-orange-100 text-orange-700 border-orange-300">
+                                    <Clock className="mr-1 h-3 w-3" />
+                                    En attente
+                                  </Badge>
                                 )}
                               </div>
-                              <div className="text-right">
-                                <div className="text-2xl font-bold text-blue-600">
-                                  {formatPrice(annonce.prix)}
-                                </div>
-                                <Badge
-                                  variant={
-                                    annonce.statut === 'actif'
-                                      ? 'default'
-                                      : 'secondary'
-                                  }
-                                  className="mt-2"
-                                >
-                                  {annonce.statut}
-                                </Badge>
-                              </div>
-                            </div>
-
-                            <p className="line-clamp-2 text-sm text-gray-600">
-                              {annonce.description}
-                            </p>
-
-                            <div className="mt-2 flex gap-4 text-sm text-gray-600">
-                              {annonce.surface && (
-                                <span>{annonce.surface} m²</span>
-                              )}
-                              {annonce.nombre_chambres && (
-                                <span>{annonce.nombre_chambres} chambres</span>
-                              )}
-                              {annonce.categorie && (
-                                <span>{annonce.categorie.nom}</span>
-                              )}
                             </div>
                           </div>
 
-                          <div className="mt-4 flex gap-2">
+                          {/* Actions */}
+                          <div className="flex gap-2">
                             <Button size="sm" variant="outline" asChild>
-                              <Link href={`/biens/${annonce.id}`} target="_blank">
+                              <Link href={`/mon-espace/annonces/${annonce.code || annonce.id}/preview`} target="_blank">
                                 <Eye className="mr-2 h-4 w-4" />
-                                Voir
+                                Voir détail
                               </Link>
                             </Button>
-                            <Button size="sm" variant="outline" asChild>
-                              <Link href={`/mon-espace/annonces/${annonce.id}`}>
+                            <Button size="sm" variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50" asChild>
+                              <Link href={`/mon-espace/annonces/${annonce.code || annonce.id}`}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Modifier
                               </Link>
                             </Button>
-                            <Button
+                            {/* <Button
                               size="sm"
                               variant="outline"
-                              className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                              onClick={() => handleDelete(annonce.id)}
-                              disabled={deleteMutation.isPending}
+                              className="border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                              title="Booster cette annonce"
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Supprimer
-                            </Button>
+                              <Star className="mr-2 h-4 w-4" />
+                              Booster
+                            </Button> */}
                           </div>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                );
-              })}
-            </div>
-          )}
+                ))}
+
+                {/* Pagination premium */}
+                {totalPages > 1 && (() => {
+                  const startItem = (currentPage - 1) * 10 + 1;
+                  const endItem = Math.min(currentPage * 10, totalAnnonces);
+                  
+                  // Générer les numéros de page à afficher intelligemment
+                  const getPageNumbers = () => {
+                    const pages: (number | string)[] = [];
+                    const maxVisible = 7;
+                    
+                    if (totalPages <= maxVisible) {
+                      return Array.from({ length: totalPages }, (_, i) => i + 1);
+                    }
+                    
+                    pages.push(1);
+                    
+                    if (currentPage > 3) {
+                      pages.push('start-ellipsis');
+                    }
+                    
+                    const start = Math.max(2, currentPage - 1);
+                    const end = Math.min(totalPages - 1, currentPage + 1);
+                    
+                    for (let i = start; i <= end; i++) {
+                      pages.push(i);
+                    }
+                    
+                    if (currentPage < totalPages - 2) {
+                      pages.push('end-ellipsis');
+                    }
+                    
+                    if (totalPages > 1) {
+                      pages.push(totalPages);
+                    }
+                    
+                    return pages;
+                  };
+
+                  return (
+                    <Card className="mt-8">
+                      <CardContent className="p-6">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                          {/* Indicateur de résultats */}
+                          <div className="text-sm text-gray-600">
+                            Affichage de <span className="font-semibold text-gray-900">{startItem}</span> à{' '}
+                            <span className="font-semibold text-gray-900">{endItem}</span> sur{' '}
+                            <span className="font-semibold text-gray-900">{totalAnnonces}</span> annonce{totalAnnonces > 1 ? 's' : ''}
+                          </div>
+                          
+                          {/* Boutons de pagination */}
+                          <div className="flex flex-wrap items-center justify-center gap-2">
+                            {/* Première page */}
+                            <button
+                              onClick={() => setCurrentPage(1)}
+                              disabled={currentPage === 1}
+                              className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all ${
+                                currentPage === 1
+                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border-2 border-gray-200'
+                              }`}
+                              title="Première page"
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                              <ChevronLeft className="w-4 h-4 -ml-3" />
+                            </button>
+                            
+                            {/* Précédent */}
+                            <button
+                              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                              disabled={currentPage === 1}
+                              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all ${
+                                currentPage === 1
+                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg'
+                              }`}
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                              <span className="hidden sm:inline">Précédent</span>
+                            </button>
+                            
+                            {/* Numéros de page */}
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              {getPageNumbers().map((pageNum, index) => {
+                                if (typeof pageNum === 'string') {
+                                  return (
+                                    <span key={pageNum} className="px-2 text-gray-400 font-bold text-lg">
+                                      ⋯
+                                    </span>
+                                  );
+                                }
+                                
+                                const isCurrentPage = currentPage === pageNum;
+                                return (
+                                  <button
+                                    key={pageNum}
+                                    onClick={() => setCurrentPage(pageNum)}
+                                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl font-bold transition-all ${
+                                      isCurrentPage
+                                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg scale-110 ring-2 ring-blue-200'
+                                        : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border-2 border-gray-200 hover:border-blue-300'
+                                    }`}
+                                  >
+                                    {pageNum}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            
+                            {/* Suivant */}
+                            <button
+                              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                              disabled={currentPage >= totalPages}
+                              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all ${
+                                currentPage >= totalPages
+                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg'
+                              }`}
+                            >
+                              <span className="hidden sm:inline">Suivant</span>
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                            
+                            {/* Dernière page */}
+                            <button
+                              onClick={() => setCurrentPage(totalPages)}
+                              disabled={currentPage === totalPages}
+                              className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all ${
+                                currentPage === totalPages
+                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border-2 border-gray-200'
+                              }`}
+                              title="Dernière page"
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                              <ChevronRight className="w-4 h-4 -ml-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </MainLayout>
+    </>
   );
 }
-

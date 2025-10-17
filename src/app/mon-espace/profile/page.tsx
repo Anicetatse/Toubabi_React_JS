@@ -2,23 +2,28 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { authService } from '@/services/authService';
-import { Loader2, Check } from 'lucide-react';
+import { Loader2, Check, User, Eye, EyeOff } from 'lucide-react';
+import { Header } from '@/components/layout/Header';
+// import { ClientMenu } from '@/components/ClientMenu';
+import { ClientTopBar } from '@/components/ClientTopBar';
+import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 const profileSchema = z.object({
-  name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
+  nom: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
+  prenom: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
   email: z.string().email('Email invalide'),
   telephone: z.string().optional(),
-  adresse: z.string().optional(),
+  image: z.string().optional(),
 });
 
 const passwordSchema = z
@@ -49,15 +54,37 @@ export default function ProfilePage() {
     register: registerProfile,
     handleSubmit: handleSubmitProfile,
     formState: { errors: profileErrors },
+    control,
+    setValue,
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: user?.name || '',
+      nom: user?.nom || '',
+      prenom: user?.prenom || '',
       email: user?.email || '',
       telephone: user?.telephone || '',
-      adresse: user?.adresse || '',
+      image: user?.image || '',
     },
   });
+
+  const [localPreview, setLocalPreview] = useState<string | undefined>(undefined);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
+  const imageValue = useWatch({ control, name: 'image' });
+
+  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      setLocalPreview(dataUrl);
+      setValue('image', dataUrl, { shouldDirty: true });
+    };
+    reader.readAsDataURL(file);
+  };
 
   const {
     register: registerPassword,
@@ -111,10 +138,11 @@ export default function ProfilePage() {
   };
 
   return (
-    <MainLayout>
-      <div className="bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="mb-8 text-3xl font-bold">Mon profil</h1>
+    <>
+      <Header />
+      <div className="bg-gray-50 min-h-screen">
+        <div className="container mx-auto p-4 lg:p-6 space-y-6">
+          <ClientTopBar />
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Informations personnelles */}
@@ -123,6 +151,28 @@ export default function ProfilePage() {
                 <CardTitle>Informations personnelles</CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Aperçu photo de profil */}
+                <div className="mb-4 flex items-center gap-4">
+                  <div className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-blue-600 bg-blue-50">
+                    { (localPreview || imageValue || user?.image) ? (
+                      <Image src={(localPreview || imageValue || (user?.image as string)) as string} alt="Photo de profil" fill className="object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-blue-600">
+                        <User className="h-8 w-8" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label htmlFor="upload-avatar" className="cursor-pointer rounded-md border px-3 py-2 font-medium hover:bg-gray-50">
+                        Importer une photo
+                      </label>
+                      <input id="upload-avatar" type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
+                     
+                    </div>
+                   
+                  </div>
+                </div>
                 <form
                   onSubmit={handleSubmitProfile(onSubmitProfile)}
                   className="space-y-4"
@@ -139,17 +189,32 @@ export default function ProfilePage() {
                     </div>
                   )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nom complet</Label>
-                    <Input
-                      id="name"
-                      {...registerProfile('name')}
-                    />
-                    {profileErrors.name && (
-                      <p className="text-sm text-red-600">
-                        {profileErrors.name.message}
-                      </p>
-                    )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="prenom">Prénom</Label>
+                      <Input
+                        id="prenom"
+                        {...registerProfile('prenom')}
+                      />
+                      {profileErrors.prenom && (
+                        <p className="text-sm text-red-600">
+                          {profileErrors.prenom.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="nom">Nom</Label>
+                      <Input
+                        id="nom"
+                        {...registerProfile('nom')}
+                      />
+                      {profileErrors.nom && (
+                        <p className="text-sm text-red-600">
+                          {profileErrors.nom.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -175,14 +240,6 @@ export default function ProfilePage() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="adresse">Adresse</Label>
-                    <Input
-                      id="adresse"
-                      {...registerProfile('adresse')}
-                    />
-                  </div>
-
                   <Button
                     type="submit"
                     className="w-full"
@@ -201,10 +258,10 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
 
-            {/* Modifier le mot de passe */}
+            {/* Mot de passe */}
             <Card>
               <CardHeader>
-                <CardTitle>Changer le mot de passe</CardTitle>
+                <CardTitle>Modifier le mot de passe</CardTitle>
               </CardHeader>
               <CardContent>
                 <form
@@ -227,11 +284,21 @@ export default function ProfilePage() {
                     <Label htmlFor="current_password">
                       Mot de passe actuel
                     </Label>
-                    <Input
-                      id="current_password"
-                      type="password"
-                      {...registerPassword('current_password')}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="current_password"
+                        type={showCurrentPassword ? 'text' : 'password'}
+                        {...registerPassword('current_password')}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                     {passwordErrors.current_password && (
                       <p className="text-sm text-red-600">
                         {passwordErrors.current_password.message}
@@ -241,11 +308,21 @@ export default function ProfilePage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="password">Nouveau mot de passe</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      {...registerPassword('password')}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        {...registerPassword('password')}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                     {passwordErrors.password && (
                       <p className="text-sm text-red-600">
                         {passwordErrors.password.message}
@@ -257,11 +334,21 @@ export default function ProfilePage() {
                     <Label htmlFor="password_confirmation">
                       Confirmer le nouveau mot de passe
                     </Label>
-                    <Input
-                      id="password_confirmation"
-                      type="password"
-                      {...registerPassword('password_confirmation')}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password_confirmation"
+                        type={showPasswordConfirmation ? 'text' : 'password'}
+                        {...registerPassword('password_confirmation')}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPasswordConfirmation ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                     {passwordErrors.password_confirmation && (
                       <p className="text-sm text-red-600">
                         {passwordErrors.password_confirmation.message}
@@ -289,7 +376,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-    </MainLayout>
+    </>
   );
 }
 

@@ -2,137 +2,325 @@
 
 import { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Mail, Phone, Eye, Ban, CheckCircle } from 'lucide-react';
+import { 
+  Search, 
+  UserCheck, 
+  UserX, 
+  Edit, 
+  Trash2, 
+  Plus,
+  Filter,
+  MoreHorizontal,
+  Users
+} from 'lucide-react';
+import { useAdminClients, useToggleClientStatus, useDeleteClient } from '@/hooks/useAdmin';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function AdminClientsPage() {
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; clientId?: number }>({ open: false });
 
-  // Mock data
-  const clients = [
-    {
-      id: 1,
-      name: 'Jean Kouassi',
-      email: 'jean.kouassi@example.com',
-      telephone: '+225 07 00 00 00 01',
-      role: 'client',
-      status: 'actif',
-      created_at: '2024-01-15',
-      annonces_count: 5,
-    },
-    {
-      id: 2,
-      name: 'Marie Diallo',
-      email: 'marie.diallo@example.com',
-      telephone: '+225 07 00 00 00 02',
-      role: 'client',
-      status: 'actif',
-      created_at: '2024-02-10',
-      annonces_count: 2,
-    },
-  ];
+  const { data: clientsData, isLoading, error } = useAdminClients(page, 10, search);
+  const toggleStatusMutation = useToggleClientStatus();
+  const deleteMutation = useDeleteClient();
+
+  const handleToggleStatus = (clientId: number, currentStatus: boolean) => {
+    toggleStatusMutation.mutate({ id: clientId, enabled: !currentStatus });
+  };
+
+  const handleDelete = (clientId: number) => {
+    setDeleteDialog({ open: true, clientId });
+  };
+
+  const confirmDelete = () => {
+    if (deleteDialog.clientId) {
+      deleteMutation.mutate(deleteDialog.clientId);
+      setDeleteDialog({ open: false });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="text-center text-red-600">
+          Erreur lors du chargement des clients
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestion des clients</h1>
-          <p className="text-gray-600">
-            Gérez tous les utilisateurs de la plateforme
-          </p>
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Gestion des Clients</h1>
+            <p className="text-gray-600">
+              Gérez tous les utilisateurs de la plateforme
+            </p>
+          </div>
+          <Button className="bg-red-600 hover:bg-red-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau Client
+          </Button>
         </div>
 
+        {/* Filtres et recherche */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <CardContent className="p-6">
+            <div className="flex gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  type="text"
-                  placeholder="Rechercher un client..."
-                  className="pl-10"
+                  placeholder="Rechercher par nom, email, téléphone..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10"
                 />
               </div>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" />
+                Filtres
+              </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Statistiques rapides */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Clients</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {clientsData?.total || 0}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <UserCheck className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Clients Actifs</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {clientsData?.clients.filter(c => c.enabled).length || 0}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <UserX className="h-6 w-6 text-orange-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Clients Inactifs</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {clientsData?.clients.filter(c => !c.enabled).length || 0}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Liste des clients */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Liste des Clients ({clientsData?.total || 0})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="border-b">
-                  <tr className="text-left text-sm text-gray-600">
-                    <th className="pb-3 font-medium">ID</th>
-                    <th className="pb-3 font-medium">Nom</th>
-                    <th className="pb-3 font-medium">Contact</th>
-                    <th className="pb-3 font-medium">Statut</th>
-                    <th className="pb-3 font-medium">Annonces</th>
-                    <th className="pb-3 font-medium">Inscription</th>
-                    <th className="pb-3 font-medium text-right">Actions</th>
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Nom</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Email</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Téléphone</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Type</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Statut</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Date d'inscription</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
-                  {clients.map((client) => (
-                    <tr key={client.id} className="text-sm">
-                      <td className="py-3">#{client.id}</td>
-                      <td className="py-3">
-                        <div className="font-medium">{client.name}</div>
-                        <Badge variant="outline" className="mt-1">
-                          {client.role}
-                        </Badge>
-                      </td>
-                      <td className="py-3">
-                        <div className="flex items-center gap-1 text-gray-600">
-                          <Mail className="h-3 w-3" />
-                          {client.email}
-                        </div>
-                        <div className="flex items-center gap-1 text-gray-600">
-                          <Phone className="h-3 w-3" />
-                          {client.telephone}
-                        </div>
-                      </td>
-                      <td className="py-3">
-                        {client.status === 'actif' ? (
-                          <Badge className="bg-green-100 text-green-600">
-                            <CheckCircle className="mr-1 h-3 w-3" />
-                            Actif
+                <tbody>
+                  {clientsData?.clients?.length ? (
+                    clientsData.clients.map((client) => (
+                      <tr key={client.id} className="border-b hover:bg-gray-50">
+                        <td className="py-4 px-4">
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {client.nom} {client.prenom}
+                            </p>
+                            <p className="text-sm text-gray-600">ID: #{client.id}</p>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <p className="text-sm text-gray-900">{client.email}</p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <p className="text-sm text-gray-900">{client.telephone || 'N/A'}</p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <Badge variant="outline" className="capitalize">
+                            {client.role}
                           </Badge>
-                        ) : (
-                          <Badge variant="secondary">Inactif</Badge>
-                        )}
-                      </td>
-                      <td className="py-3 text-center font-semibold">
-                        {client.annonces_count}
-                      </td>
-                      <td className="py-3 text-gray-600">
-                        {new Date(client.created_at).toLocaleDateString('fr-FR')}
-                      </td>
-                      <td className="py-3">
-                        <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="ghost">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-600 hover:text-red-700"
+                        </td>
+                        <td className="py-4 px-4">
+                          <Badge 
+                            variant={client.enabled ? "default" : "secondary"}
+                            className={client.enabled ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
                           >
-                            <Ban className="h-4 w-4" />
-                          </Button>
-                        </div>
+                            {client.enabled ? 'Actif' : 'Inactif'}
+                          </Badge>
+                        </td>
+                        <td className="py-4 px-4">
+                          <p className="text-sm text-gray-600">
+                            {new Date(client.created_at).toLocaleDateString('fr-FR')}
+                          </p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Modifier
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleToggleStatus(client.id, client.enabled)}
+                              >
+                                {client.enabled ? (
+                                  <>
+                                    <UserX className="h-4 w-4 mr-2" />
+                                    Désactiver
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Activer
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(client.id)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Supprimer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="text-center py-8 text-gray-500">
+                        Aucun client trouvé
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination */}
+            {clientsData && clientsData.total > 10 && (
+              <div className="flex justify-center items-center gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(Math.max(1, page - 1))}
+                  disabled={page === 1}
+                >
+                  Précédent
+                </Button>
+                <span className="text-sm text-gray-600">
+                  Page {page} sur {Math.ceil(clientsData.total / 10)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(page + 1)}
+                  disabled={page >= Math.ceil(clientsData.total / 10)}
+                >
+                  Suivant
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        {/* Dialog de confirmation de suppression */}
+        <AlertDialog open={deleteDialog.open} onOpenChange={(open: boolean) => setDeleteDialog({ open })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+              <AlertDialogDescription>
+                Êtes-vous sûr de vouloir supprimer ce client ? Cette action est irréversible.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AdminLayout>
   );
 }
-

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { verifyToken, extractToken } from '@/lib/auth-utils';
+import fs from 'fs';
+import path from 'path';
 
 export async function GET(request: NextRequest) {
   try {
@@ -191,6 +194,171 @@ export async function GET(request: NextRequest) {
     console.error('Erreur API biens:', error);
     return NextResponse.json(
       { success: false, message: 'Erreur serveur' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const formData = await request.formData();
+    
+    // Extraire les données du formulaire
+    const type = formData.get('type') as string;
+    const categorie = formData.get('categorie') as string;
+    const souscategorie = formData.get('souscategorie') as string || null;
+    const meuble = formData.get('meuble') as string;
+    const piece = formData.get('piece') as string;
+    const chambre = formData.get('chambre') as string;
+    const surface = formData.get('surface') as string;
+    const prix = formData.get('prix') as string;
+    const commune = formData.get('commune') as string;
+    const quartier = formData.get('quartier') as string;
+    const description = formData.get('description') as string;
+    const approuve = formData.get('approuve') as string;
+
+    // Extraire les caractéristiques
+    const caracteristiques: number[] = [];
+    formData.forEach((value, key) => {
+      if (key.startsWith('caracteristiques[')) {
+        caracteristiques.push(parseInt(value as string));
+      }
+    });
+
+    // Extraire les images
+    const images: File[] = [];
+    formData.forEach((value, key) => {
+      if (key.startsWith('images[') && value instanceof File) {
+        images.push(value);
+      }
+    });
+
+    console.log('Données reçues:', {
+      type, categorie, souscategorie, meuble, piece, chambre, 
+      surface, prix, commune, quartier, description, approuve,
+      caracteristiques, imagesCount: images.length
+    });
+
+    // Valider les champs requis
+    if (!type || !categorie || !prix || !commune || !quartier || !description) {
+      return NextResponse.json(
+        { success: false, message: 'Champs obligatoires manquants' },
+        { status: 400 }
+      );
+    }
+
+    // Récupérer l'utilisateur connecté depuis le token
+    const authHeader = request.headers.get('authorization');
+    const token = extractToken(authHeader);
+    
+    if (!token) {
+      return NextResponse.json(
+        { success: false, message: 'Non authentifié - Token manquant' },
+        { status: 401 }
+      );
+    }
+
+    const payload = verifyToken(token);
+    if (!payload) {
+      return NextResponse.json(
+        { success: false, message: 'Token invalide ou expiré' },
+        { status: 401 }
+      );
+    }
+
+    const client_owner_id = parseInt(payload.userId);
+
+    // Générer un code unique pour le produit (8 caractères aléatoires comme dans l'exemple)
+    const code = Math.random().toString(36).substring(2, 10);
+
+    // Générer le nom du produit
+    const categorieData = await prisma.$queryRawUnsafe(
+      'SELECT nom FROM categories WHERE code = ?',
+      categorie
+    ) as any[];
+    const categorieNom = categorieData[0]?.nom || 'Bien';
+    
+    const communeData = await prisma.$queryRawUnsafe(
+      'SELECT nom FROM communes WHERE id = ?',
+      parseInt(commune)
+    ) as any[];
+    const communeNom = communeData[0]?.nom || '';
+
+    const nom = `${categorieNom} ${piece || ''} pièce(s) à ${type === 'louer' ? 'louer' : 'vendre'} à ${communeNom}`;
+
+    // Upload des images
+    const uploadDir = path.join(process.cwd(), 'public', 'assets', 'annonces');
+    
+    // Créer le dossier s'il n'existe pas
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const imagesPaths: string[] = [];
+    for (const image of images) {
+      const buffer = Buffer.from(await image.arrayBuffer());
+      const filename = `${Date.now()}-${Math.random().toString(36).substring(2)}.${image.name.split('.').pop()}`;
+      const filepath = path.join(uploadDir, filename);
+      fs.writeFileSync(filepath, buffer);
+      imagesPaths.push(`/assets/annonces/${filename}`);
+    }
+
+    // Stocker les images en JSON comme dans Laravel
+    const imagesJson = JSON.stringify(imagesPaths);
+
+    // Insérer le produit en base de données
+    await prisma.$queryRawUnsafe(`
+      INSERT INTO produits (
+        code, nom, image, prix_vente, description, code_categorie, code_souscategorie,
+        surface, piece, chambre, id_commune, id_quartier, type_annonce, meuble,
+        enabled, client_owner_id, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+    `,
+      code,
+      nom,
+      imagesJson,
+      parseInt(prix),
+      description,
+      categorie,
+      souscategorie || null,
+      surface ? parseInt(surface) : 0,
+      piece ? parseInt(piece) : 0,
+      chambre ? parseInt(chambre) : 0,
+      parseInt(commune),
+      parseInt(quartier),
+      type,
+      meuble ? parseInt(meuble) : null,
+      0, // enabled = 0 (en attente de validation)
+      client_owner_id
+    );
+
+    // Insérer les caractéristiques si présentes
+    if (caracteristiques.length > 0) {
+      for (const caracteristiqueId of caracteristiques) {
+        await prisma.$queryRawUnsafe(`
+          INSERT INTO caracretistique_produits (caracteristique_id, produit_code, created_at, updated_at)
+          VALUES (?, ?, NOW(), NOW())
+        `, caracteristiqueId, code);
+      }
+    }
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Annonce créée avec succès et en attente de validation',
+      data: {
+        code,
+        nom,
+        type_annonce: type,
+        code_categorie: categorie,
+        prix_vente: parseInt(prix),
+        images_count: imagesPaths.length,
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Erreur création annonce:', error);
+    return NextResponse.json(
+      { success: false, message: error.message || 'Erreur lors de la création' },
       { status: 500 }
     );
   }

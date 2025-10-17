@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Menu, X, ShoppingCart, Heart, User, Search, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/hooks/useWishlist';
+import toast from 'react-hot-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,8 +20,10 @@ import {
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
   const { itemsCount } = useCart();
+  const { wishlistCount } = useWishlist();
 
   const navigation = [
     { 
@@ -51,8 +55,27 @@ export function Header() {
   ];
 
   const handleLogout = async () => {
-    logout();
-    window.location.href = '/';
+    try {
+      logout();
+      
+      // Afficher une notification de succès
+      toast.success('Vous êtes maintenant déconnecté. À bientôt !', {
+        duration: 3000,
+        style: {
+          background: '#dcfce7',
+          color: '#15803d',
+          border: '2px solid #22c55e',
+          fontWeight: '600',
+        },
+      });
+      
+      // Rediriger vers la page d'accueil après un court délai
+      setTimeout(() => {
+        router.push('/');
+      }, 500);
+    } catch (error) {
+      toast.error('Erreur lors de la déconnexion');
+    }
   };
 
   return (
@@ -109,9 +132,14 @@ export function Header() {
           {/* Wishlist */}
           {isAuthenticated && (
             <Link href="/mon-espace/wishlist">
-              <Button variant="ghost" className="hidden sm:flex">
+              <Button variant="ghost" className="hidden sm:flex relative">
                 <Heart className="h-4 w-4 mr-2" />
                 Mes favoris
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white">
+                    {wishlistCount}
+                  </span>
+                )}
               </Button>
             </Link>
           )}
@@ -127,7 +155,7 @@ export function Header() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{user?.name}</p>
+                  <p className="text-sm font-medium">{user?.prenom} {user?.nom}</p>
                   <p className="text-xs text-muted-foreground">{user?.email}</p>
                 </div>
                 <DropdownMenuSeparator />

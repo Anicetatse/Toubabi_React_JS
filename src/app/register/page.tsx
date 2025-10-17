@@ -7,21 +7,28 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { authService } from '@/services/authService';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Mail, Lock, User as UserIcon, Phone } from 'lucide-react';
+import { Loader2, Mail, Lock, User as UserIcon, Phone, Briefcase, Eye, EyeOff } from 'lucide-react';
+import { Header } from '@/components/layout/Header';
+import ReCAPTCHA from 'react-google-recaptcha';
+import { useRef } from 'react';
+import toast from 'react-hot-toast';
 
 const registerSchema = z.object({
-  name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
-  email: z.string().email('Email invalide'),
-  telephone: z.string().optional(),
-  password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+  nom: z.string().min(3, 'Le nom doit contenir au moins 3 caractères').max(50),
+  prenom: z.string().min(3, 'Le prénom doit contenir au moins 3 caractères').max(50),
+  email: z.string().email('Email invalide').max(50),
+  telephone: z.string().min(10, 'Le téléphone doit contenir au moins 10 chiffres').max(15),
+  type_compte: z.enum(['client', 'agent_professionnel', 'agent_informel', 'agence'], {
+    message: 'Veuillez sélectionner un type de compte'
+  }),
+  password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
   password_confirmation: z.string(),
+  captcha: z.string().min(1, 'Veuillez valider le captcha'),
 }).refine((data) => data.password === data.password_confirmation, {
   message: 'Les mots de passe ne correspondent pas',
   path: ['password_confirmation'],
@@ -33,23 +40,59 @@ export default function RegisterPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [captchaValue, setCaptchaValue] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      type_compte: 'client',
+    },
   });
+
+  const onCaptchaChange = (value: string | null) => {
+    setCaptchaValue(value);
+    setValue('captcha', value || '', { shouldValidate: true });
+  };
 
   const registerMutation = useMutation({
     mutationFn: authService.register,
     onSuccess: (data) => {
       login(data.token, data.user);
-      router.push('/mon-espace/dashboard');
+      toast.success(`Compte créé avec succès ! Bienvenue ${data.user.prenom} 🎉`, {
+        icon: '✅',
+        duration: 4000,
+        style: {
+          background: '#dcfce7',
+          color: '#15803d',
+          border: '2px solid #22c55e',
+          fontWeight: '600',
+        },
+      });
+      setTimeout(() => {
+        router.push('/mon-espace/dashboard');
+      }, 500);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Une erreur est survenue lors de l\'inscription');
+      const message = err.response?.data?.message || 'Une erreur est survenue lors de l\'inscription';
+      setError(message);
+      toast.error(message, {
+        icon: '❌',
+        duration: 5000,
+        style: {
+          background: '#fee2e2',
+          color: '#991b1b',
+          border: '2px solid #ef4444',
+          fontWeight: '600',
+        },
+      });
     },
   });
 
@@ -59,106 +102,211 @@ export default function RegisterPage() {
   };
 
   return (
-    <MainLayout>
-      <div className="container mx-auto flex min-h-[calc(100vh-12rem)] items-center justify-center px-4 py-12">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Inscription</CardTitle>
-            <CardDescription>
-              Créez votre compte pour commencer à utiliser Toubabi
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <>
+      <Header />
+      <div className="min-h-screen flex">
+        {/* Section gauche - Formulaire */}
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-white">
+          <div className="w-full max-w-md space-y-8 py-12">
+            {/* En-tête */}
+            <div className="text-center">
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                Créer un compte
+              </h2>
+              <p className="mt-2 text-sm text-gray-600">
+                Rejoignez Toubabi dès aujourd'hui
+              </p>
+            </div>
+
+            {/* Formulaire */}
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">
               {error && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-                  {error}
+                <div className="rounded-lg bg-red-50 border border-red-200 p-4 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-red-800">{error}</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="name">Nom complet</Label>
-                <div className="relative">
-                  <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Jean Dupont"
-                    className="pl-10"
-                    {...register('name')}
-                  />
+              <div className="space-y-5">
+                <div>
+                  <Label htmlFor="nom" className="block text-sm font-medium text-gray-700 mb-2">
+                    Nom
+                  </Label>
+                  <div className="relative group">
+                    <UserIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+                    <Input
+                      id="nom"
+                      type="text"
+                      placeholder="Dupont"
+                      className="pl-11 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
+                      {...register('nom')}
+                    />
+                  </div>
+                  {errors.nom && (
+                    <p className="mt-2 text-sm text-red-600 animate-in fade-in slide-in-from-top-1">
+                      {errors.nom.message}
+                    </p>
+                  )}
                 </div>
-                {errors.name && (
-                  <p className="text-sm text-red-600">{errors.name.message}</p>
-                )}
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="votre@email.com"
-                    className="pl-10"
-                    {...register('email')}
-                  />
+                <div>
+                  <Label htmlFor="prenom" className="block text-sm font-medium text-gray-700 mb-2">
+                    Prénom
+                  </Label>
+                  <div className="relative group">
+                    <UserIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+                    <Input
+                      id="prenom"
+                      type="text"
+                      placeholder="Jean"
+                      className="pl-11 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
+                      {...register('prenom')}
+                    />
+                  </div>
+                  {errors.prenom && (
+                    <p className="mt-2 text-sm text-red-600 animate-in fade-in slide-in-from-top-1">
+                      {errors.prenom.message}
+                    </p>
+                  )}
                 </div>
-                {errors.email && (
-                  <p className="text-sm text-red-600">{errors.email.message}</p>
-                )}
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="telephone">Téléphone (optionnel)</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    id="telephone"
-                    type="tel"
-                    placeholder="+225 07 00 00 00 00"
-                    className="pl-10"
-                    {...register('telephone')}
-                  />
+                <div>
+                  <Label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Adresse email
+                  </Label>
+                  <div className="relative group">
+                    <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="exemple@email.com"
+                      className="pl-11 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
+                      {...register('email')}
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="mt-2 text-sm text-red-600 animate-in fade-in slide-in-from-top-1">
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
-                {errors.telephone && (
-                  <p className="text-sm text-red-600">{errors.telephone.message}</p>
-                )}
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Mot de passe</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
-                    {...register('password')}
-                  />
+                <div>
+                  <Label htmlFor="telephone" className="block text-sm font-medium text-gray-700 mb-2">
+                    Téléphone
+                  </Label>
+                  <div className="relative group">
+                    <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+                    <Input
+                      id="telephone"
+                      type="tel"
+                      placeholder="+225 07 00 00 00 00"
+                      className="pl-11 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
+                      {...register('telephone')}
+                    />
+                  </div>
+                  {errors.telephone && (
+                    <p className="mt-2 text-sm text-red-600 animate-in fade-in slide-in-from-top-1">
+                      {errors.telephone.message}
+                    </p>
+                  )}
                 </div>
-                {errors.password && (
-                  <p className="text-sm text-red-600">{errors.password.message}</p>
-                )}
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password_confirmation">Confirmer le mot de passe</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    id="password_confirmation"
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
-                    {...register('password_confirmation')}
-                  />
+                <div>
+                  <Label htmlFor="type_compte" className="block text-sm font-medium text-gray-700 mb-2">
+                    Type de compte
+                  </Label>
+                  <div className="relative group">
+                    <Briefcase className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors pointer-events-none z-10" />
+                    <select
+                      id="type_compte"
+                      className="w-full pl-11 h-12 border-gray-300 rounded-md focus:border-blue-500 focus:ring-blue-500 transition-all appearance-none bg-white"
+                      {...register('type_compte')}
+                    >
+                      <option value="client">Pour un particulier</option>
+                      <option value="agent_professionnel">Pour un agent immobilier (individuel)</option>
+                      <option value="agent_informel">Pour un agent informel</option>
+                      <option value="agence">Pour une agence immobilière (société)</option>
+                    </select>
+                  </div>
+                  {errors.type_compte && (
+                    <p className="mt-2 text-sm text-red-600 animate-in fade-in slide-in-from-top-1">
+                      {errors.type_compte.message}
+                    </p>
+                  )}
                 </div>
-                {errors.password_confirmation && (
-                  <p className="text-sm text-red-600">{errors.password_confirmation.message}</p>
-                )}
+
+                <div>
+                  <Label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                    Mot de passe
+                  </Label>
+                  <div className="relative group">
+                    <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="pl-11 pr-11 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
+                      {...register('password')}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="mt-2 text-sm text-red-600 animate-in fade-in slide-in-from-top-1">
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirmer le mot de passe
+                  </Label>
+                  <div className="relative group">
+                    <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+                    <Input
+                      id="password_confirmation"
+                      type={showPasswordConfirmation ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="pl-11 pr-11 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
+                      {...register('password_confirmation')}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      {showPasswordConfirmation ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                  {errors.password_confirmation && (
+                    <p className="mt-2 text-sm text-red-600 animate-in fade-in slide-in-from-top-1">
+                      {errors.password_confirmation.message}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="text-xs text-gray-600">
@@ -173,73 +321,74 @@ export default function RegisterPage() {
                 .
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={registerMutation.isPending}
-              >
-                {registerMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Inscription en cours...
-                  </>
-                ) : (
-                  'S\'inscrire'
-                )}
-              </Button>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-muted-foreground">
-                    Ou continuer avec
-                  </span>
+              {/* reCAPTCHA */}
+              <div className="flex justify-center">
+                <div>
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ''}
+                    onChange={onCaptchaChange}
+                  />
+                  {errors.captcha && (
+                    <p className="mt-2 text-sm text-red-600 text-center animate-in fade-in slide-in-from-top-1">
+                      {errors.captcha.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" type="button" disabled>
-                  <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-                    <path
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      fill="#4285F4"
-                    />
-                    <path
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      fill="#34A853"
-                    />
-                    <path
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                      fill="#FBBC05"
-                    />
-                    <path
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                      fill="#EA4335"
-                    />
-                  </svg>
-                  Google
+              <div>
+                <Button
+                  type="submit"
+                  className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/50 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/60"
+                  disabled={registerMutation.isPending}
+                >
+                  {registerMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Inscription en cours...
+                    </>
+                  ) : (
+                    'S\'inscrire'
+                  )}
                 </Button>
-                <Button variant="outline" type="button" disabled>
-                  <svg className="mr-2 h-4 w-4" fill="#1877F2" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                  </svg>
-                  Facebook
-                </Button>
-              </div>
-
-              <div className="text-center text-sm">
-                <span className="text-gray-600">Vous avez déjà un compte ? </span>
-                <Link href="/login" className="font-medium text-blue-600 hover:underline">
-                  Connectez-vous
-                </Link>
               </div>
             </form>
-          </CardContent>
-        </Card>
+
+            <p className="text-center text-sm text-gray-600 mt-6">
+              Déjà un compte ?{' '}
+              <Link 
+                href="/login" 
+                className="font-semibold text-blue-600 hover:text-blue-500 transition-colors"
+              >
+                Se connecter
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        {/* Section droite - Image */}
+        <div className="hidden lg:flex lg:flex-1 relative overflow-hidden">
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: 'url(/assets/img/banner-1.jpg)' }}
+          >
+            {/* Overlay subtil */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-blue-800/30"></div>
+          </div>
+          
+          {/* Texte par-dessus l'image */}
+          <div className="relative z-10 flex flex-col justify-start p-16 text-white">
+            <h1 className="text-4xl font-bold mb-3">
+              Rejoignez Toubabi
+            </h1>
+            <p className="text-lg text-white/90">
+              Accédez à des milliers de biens immobiliers
+            </p>
+          </div>
+        </div>
       </div>
-    </MainLayout>
+    </>
   );
 }
 

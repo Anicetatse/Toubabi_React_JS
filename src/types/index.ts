@@ -2,15 +2,14 @@
 
 export interface User {
   id: number;
-  name: string;
+  nom: string;
+  prenom: string;
   email: string;
   telephone?: string;
-  adresse?: string;
   image?: string;
-  role: 'client' | 'admin' | 'partenaire';
-  email_verified_at?: string;
-  created_at: string;
-  updated_at: string;
+  type_compte: string; // 'particulier' | 'agent_professionnel' | 'agent_informel' | 'agence'
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Pays {
@@ -53,6 +52,7 @@ export interface Quartier {
   deleted_at?: string | null;
   created_at: string;
   updated_at: string;
+  commune?: Commune; // Relation avec la commune
   // Champs supplémentaires utilisés par les cartes héritées du PHP
   nbre_biens?: number;
   nb_biens?: number;
@@ -95,9 +95,11 @@ export interface Image {
 
 export interface Produit {
   id: number;
+  code?: string; // Code unique du produit
   titre: string;
   description: string;
   prix: number;
+  prix_vente?: number; // Alias pour compatibilité avec la base de données
   surface?: number;
   nombre_pieces?: number;
   nombre_chambres?: number;
@@ -107,6 +109,8 @@ export interface Produit {
   type_annonce_id: number;
   quartier_id: number;
   user_id: number;
+  client_owner_id?: number; // ID du client propriétaire
+  enabled?: number; // 0 = en attente, 1 = approuvée
   statut: 'actif' | 'vendu' | 'loue' | 'en_attente';
   images?: Image[];
   categorie?: Categorie;
@@ -121,10 +125,11 @@ export interface Produit {
 
 export interface Wishlist {
   id: number;
-  user_id: number;
-  produit_id: number;
+  id_client: number;
+  code_produit: string;
   produit?: Produit;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface CartItem {

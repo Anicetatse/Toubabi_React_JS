@@ -16,6 +16,7 @@ import {
 import { Loader2, Heart, MapPin, Bed, Home, X, SlidersHorizontal, ChevronLeft, ChevronRight, Search, Calendar } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { WishlistButton } from '@/components/WishlistButton';
 
 interface Commune {
   id: number;
@@ -575,7 +576,9 @@ export default function BiensPage() {
           ) : (
             <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {biens.map((bien) => (
+                  {biens.map((bien) => {
+                    console.log('🔗 Bien code:', bien.code, 'Lien:', `/biens/${bien.code}`);
+                    return (
                     <Link 
                       key={bien.code}
                       href={`/biens/${bien.code}`}
@@ -650,12 +653,13 @@ export default function BiensPage() {
                         </div>
 
                         {/* Wishlist */}
-                        <button 
-                          onClick={(e) => e.preventDefault()}
-                          className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm hover:bg-white p-3 rounded-full transition-all hover:scale-110 shadow-lg z-20"
-                        >
-                          <Heart className="w-5 h-5 text-red-500" />
-                        </button>
+                        <div className="absolute top-4 right-4 z-20">
+                          <WishlistButton 
+                            produitCode={bien.code}
+                            variant="secondary"
+                            className="bg-white/95 backdrop-blur-sm hover:bg-white shadow-lg hover:scale-110"
+                          />
+                        </div>
 
                         {/* Voir le bien (overlay) */}
                         <div className="absolute inset-0 flex items-end justify-center pb-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
@@ -720,7 +724,8 @@ export default function BiensPage() {
                         </div>
                       </div>
                     </Link>
-                ))}
+                    );
+                  })}
               </div>
 
                 {/* Pagination premium */}

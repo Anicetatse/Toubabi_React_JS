@@ -1,66 +1,458 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { AdminCrudTable } from '@/components/admin/AdminCrudTable';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import Image from 'next/image';
+import { 
+  Search, 
+  Eye, 
+  EyeOff, 
+  Edit, 
+  Trash2, 
+  Plus,
+  MoreHorizontal,
+  Tag
+} from 'lucide-react';
+import { useAdminCategories, useCreateCategorie, useUpdateCategorie, useDeleteCategorie } from '@/hooks/useAdmin';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Label } from '@/components/ui/label';
+
+interface CategorieFormData {
+  nom: string;
+  images?: string;
+  enabled: boolean;
+  pro: boolean;
+}
 
 export default function AdminCategoriesPage() {
-  // Vraies données depuis la BDD
-  const { data: categoriesData, isLoading } = useQuery({
-    queryKey: ['admin-categories'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/categories');
-      const result = await response.json();
-      return result.data || [];
-    },
+  const [search, setSearch] = useState('');
+  const [editDialog, setEditDialog] = useState<{ open: boolean; categorie?: any }>({ open: false });
+  const [createDialog, setCreateDialog] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; categorieCode?: string }>({ open: false });
+  const [formData, setFormData] = useState<CategorieFormData>({
+    nom: '',
+    images: '',
+    enabled: true,
+    pro: false
   });
 
-  const categories = categoriesData || [];
+  const { data: categories, isLoading, error } = useAdminCategories();
+  const createMutation = useCreateCategorie();
+  const updateMutation = useUpdateCategorie();
+  const deleteMutation = useDeleteCategorie();
 
-  const columns = [
-    { key: 'id', label: 'ID' },
-    {
-      key: 'image',
-      label: 'Image',
-      render: (value: string) =>
-        value ? (
-          <div className="relative h-12 w-16 overflow-hidden rounded">
-            <Image src={value} alt="Catégorie" fill className="object-cover" />
+  const filteredCategories = categories?.filter(cat => 
+    cat.nom.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleCreate = () => {
+    // Le code sera généré automatiquement dans l'API à partir du nom
+    const dataToCreate = {
+      code: '', // Sera généré par l'API
+      nom: formData.nom,
+      images: formData.images,
+      enabled: formData.enabled,
+      pro: formData.pro
+    };
+    createMutation.mutate(dataToCreate, {
+      onSuccess: () => {
+        setCreateDialog(false);
+        setFormData({ nom: '', images: '', enabled: true, pro: false });
+      }
+    });
+  };
+
+  const handleEdit = (categorie: any) => {
+    setFormData({
+      nom: categorie.nom,
+      images: categorie.images || '',
+      enabled: categorie.enabled,
+      pro: categorie.pro
+    });
+    setEditDialog({ open: true, categorie });
+  };
+
+  const handleUpdate = () => {
+    if (editDialog.categorie) {
+      updateMutation.mutate(
+        { code: editDialog.categorie.code, data: formData },
+        {
+          onSuccess: () => {
+            setEditDialog({ open: false });
+            setFormData({ nom: '', images: '', enabled: true, pro: false });
+          }
+        }
+      );
+    }
+  };
+
+  const handleDelete = (categorieCode: string) => {
+    setDeleteDialog({ open: true, categorieCode });
+  };
+
+  const confirmDelete = () => {
+    if (deleteDialog.categorieCode) {
+      deleteMutation.mutate(deleteDialog.categorieCode);
+      setDeleteDialog({ open: false });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="text-center text-red-600">
+          Erreur lors du chargement des catégories
           </div>
-        ) : (
-          'N/A'
-        ),
-    },
-    { key: 'nom', label: 'Nom' },
-    { key: 'description', label: 'Description' },
-    {
-      key: 'enabled',
-      label: 'Statut',
-      render: (value: boolean) =>
-        value ? (
-          <Badge className="bg-green-100 text-green-600">Actif</Badge>
-        ) : (
-          <Badge variant="secondary">Inactif</Badge>
-        ),
-    },
-  ];
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
-      <AdminCrudTable
-        title="Gestion des catégories"
-        data={categories}
-        columns={columns}
-        isLoading={isLoading}
-        onSearch={(query) => console.log('Search:', query)}
-        onEdit={(id) => console.log('Edit:', id)}
-        onDelete={(id) => console.log('Delete:', id)}
-        createLink="/admin/categories/new"
-        searchPlaceholder="Rechercher une catégorie..."
-      />
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Gestion des Catégories</h1>
+            <p className="text-gray-600">
+              Gérez toutes les catégories de biens immobiliers
+            </p>
+          </div>
+          <Button 
+            className="bg-red-600 hover:bg-red-700"
+            onClick={() => setCreateDialog(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nouvelle Catégorie
+          </Button>
+        </div>
+
+        {/* Recherche */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Rechercher une catégorie..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Statistiques rapides */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Tag className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Catégories</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {categories?.length || 0}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Eye className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Catégories Actives</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {categories?.filter(c => c.enabled).length || 0}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Tag className="h-6 w-6 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Catégories Pro</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {categories?.filter(c => c.pro).length || 0}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Liste des catégories */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Liste des Catégories ({filteredCategories?.length || 0})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Nom</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Code</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Produits</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Type</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Statut</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Date</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCategories?.length ? (
+                    filteredCategories.map((categorie) => (
+                      <tr key={categorie.code} className="border-b hover:bg-gray-50">
+                        <td className="py-4 px-4">
+                          <p className="font-medium text-gray-900">{categorie.nom}</p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                            {categorie.code}
+                          </code>
+                        </td>
+                        <td className="py-4 px-4">
+                          <Badge variant="outline">
+                            {categorie.nombre_produits} bien(s)
+                          </Badge>
+                        </td>
+                        <td className="py-4 px-4">
+                          {categorie.pro ? (
+                            <Badge className="bg-purple-100 text-purple-800">Pro</Badge>
+                          ) : (
+                            <Badge variant="outline">Particulier</Badge>
+                          )}
+                        </td>
+                        <td className="py-4 px-4">
+                          <Badge 
+                            variant={categorie.enabled ? "default" : "secondary"}
+                            className={categorie.enabled ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
+                          >
+                            {categorie.enabled ? 'Actif' : 'Inactif'}
+                          </Badge>
+                        </td>
+                        <td className="py-4 px-4">
+                          <p className="text-sm text-gray-600">
+                            {new Date(categorie.created_at).toLocaleDateString('fr-FR')}
+                          </p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEdit(categorie)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Modifier
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(categorie.code)}
+                                className="text-red-600"
+                                disabled={(categorie.nombre_produits || 0) > 0}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Supprimer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="text-center py-8 text-gray-500">
+                        Aucune catégorie trouvée
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Dialog de création */}
+        <Dialog open={createDialog} onOpenChange={setCreateDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nouvelle Catégorie</DialogTitle>
+              <DialogDescription>
+                Créez une nouvelle catégorie de biens immobiliers
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="nom">Nom de la catégorie *</Label>
+                <Input
+                  id="nom"
+                  value={formData.nom}
+                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                  placeholder="Ex: Appartement, Villa, Terrain..."
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="enabled"
+                  checked={formData.enabled}
+                  onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+                  className="rounded"
+                />
+                <Label htmlFor="enabled">Catégorie active</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="pro"
+                  checked={formData.pro}
+                  onChange={(e) => setFormData({ ...formData, pro: e.target.checked })}
+                  className="rounded"
+                />
+                <Label htmlFor="pro">Catégorie professionnelle</Label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateDialog(false)}>
+                Annuler
+              </Button>
+              <Button 
+                onClick={handleCreate}
+                className="bg-red-600 hover:bg-red-700"
+                disabled={!formData.nom || createMutation.isPending}
+              >
+                Créer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog d'édition */}
+        <Dialog open={editDialog.open} onOpenChange={(open: boolean) => setEditDialog({ open })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Modifier la Catégorie</DialogTitle>
+              <DialogDescription>
+                Modifiez les informations de la catégorie
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-nom">Nom de la catégorie *</Label>
+                <Input
+                  id="edit-nom"
+                  value={formData.nom}
+                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="edit-enabled"
+                  checked={formData.enabled}
+                  onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+                  className="rounded"
+                />
+                <Label htmlFor="edit-enabled">Catégorie active</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="edit-pro"
+                  checked={formData.pro}
+                  onChange={(e) => setFormData({ ...formData, pro: e.target.checked })}
+                  className="rounded"
+                />
+                <Label htmlFor="edit-pro">Catégorie professionnelle</Label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditDialog({ open: false })}>
+                Annuler
+              </Button>
+              <Button 
+                onClick={handleUpdate}
+                className="bg-red-600 hover:bg-red-700"
+                disabled={!formData.nom || updateMutation.isPending}
+              >
+                Enregistrer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de confirmation de suppression */}
+        <AlertDialog open={deleteDialog.open} onOpenChange={(open: boolean) => setDeleteDialog({ open })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+              <AlertDialogDescription>
+                Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </AdminLayout>
   );
 }
-

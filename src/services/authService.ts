@@ -2,16 +2,19 @@ import { apiClient } from '@/config/api';
 import { ApiResponse, User } from '@/types';
 
 export interface LoginData {
-  email: string;
+  identifier: string;
   password: string;
 }
 
 export interface RegisterData {
-  name: string;
+  nom: string;
+  prenom: string;
   email: string;
+  telephone: string;
+  type_compte: 'client' | 'agent_professionnel' | 'agent_informel' | 'agence';
   password: string;
   password_confirmation: string;
-  telephone?: string;
+  captcha: string;
 }
 
 export interface LoginResponse {
@@ -21,9 +24,16 @@ export interface LoginResponse {
 
 export const authService = {
   async login(data: LoginData): Promise<LoginResponse> {
+    // Déterminer si c'est un email ou un téléphone
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.identifier);
+    const loginPayload = {
+      [isEmail ? 'email' : 'telephone']: data.identifier,
+      password: data.password,
+    };
+    
     const response = await apiClient.post<ApiResponse<LoginResponse>>(
       '/auth/login',
-      data
+      loginPayload
     );
     return response.data.data!;
   },
