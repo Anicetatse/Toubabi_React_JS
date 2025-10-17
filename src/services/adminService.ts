@@ -133,8 +133,7 @@ export interface CommentaireAdmin {
 
 export interface TypeAnnonceAdmin {
   id: string;
-  nom: string;
-  description: string;
+  nom: string; // Mappé depuis "libelle" dans la BD
   created_at: string | null;
   updated_at: string | null;
 }
@@ -143,6 +142,53 @@ export interface CaracteristiqueAdmin {
   id: string;
   nom: string;
   active: number;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface VilleAdmin {
+  id: string;
+  nom: string;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface CommuneAdmin {
+  id: string;
+  nom: string;
+  id_ville: string;
+  ville_nom: string;
+  image: string | null;
+  enabled: number;
+  total_annonces: number;
+  annonces_actives: number;
+  annonces_en_attente: number;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface QuartierAdmin {
+  id: string;
+  nom: string;
+  id_commune: string;
+  commune_nom: string;
+  ville_nom: string;
+  images: string | null;
+  enabled: number;
+  lat: number | null;
+  lng: number | null;
+  total_annonces?: number;
+  annonces_actives?: number;
+  annonces_en_attente?: number;
+  prix_min_location: string | null;
+  prix_moy_location: string | null;
+  prix_max_location: string | null;
+  prix_min_vente: string | null;
+  prix_moy_vente: string | null;
+  prix_max_vente: string | null;
+  prix_venal: string | null;
+  prix_marchand: string | null;
+  prix_moyen: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -424,14 +470,14 @@ class AdminService {
     return response.data.data;
   }
 
-  createTypeAnnonce = async (data: { nom: string; description: string }): Promise<TypeAnnonceAdmin> => {
+  createTypeAnnonce = async (data: { nom: string }): Promise<TypeAnnonceAdmin> => {
     const response = await axios.post(`${API_URL}/api/admin/type-annonces`, data, {
       headers: this.getAuthHeaders(),
     });
     return response.data.data;
   }
 
-  updateTypeAnnonce = async (id: string, data: { nom: string; description: string }): Promise<void> => {
+  updateTypeAnnonce = async (id: string, data: { nom: string }): Promise<void> => {
     await axios.put(`${API_URL}/api/admin/type-annonces/${id}`, data, {
       headers: this.getAuthHeaders(),
     });
@@ -474,6 +520,103 @@ class AdminService {
 
   deleteCaracteristique = async (id: string): Promise<void> => {
     await axios.delete(`${API_URL}/api/admin/caracteristiques/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Méthodes pour la gestion des villes
+  getVilles = async (): Promise<VilleAdmin[]> => {
+    const response = await axios.get(`${API_URL}/api/admin/villes`, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data.data;
+  }
+
+  createVille = async (data: { nom: string }): Promise<VilleAdmin> => {
+    const response = await axios.post(`${API_URL}/api/admin/villes`, data, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data.data;
+  }
+
+  updateVille = async (id: string, data: { nom: string }): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/villes/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteVille = async (id: string): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/villes/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Méthodes pour la gestion des communes
+  getCommunes = async (): Promise<CommuneAdmin[]> => {
+    const response = await axios.get(`${API_URL}/api/admin/communes`, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data.data;
+  }
+
+  createCommune = async (data: { nom: string; id_ville: string; image?: string; enabled: boolean }): Promise<CommuneAdmin> => {
+    const response = await axios.post(`${API_URL}/api/admin/communes`, data, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data.data;
+  }
+
+  updateCommune = async (id: string, data: { nom: string; id_ville: string; image?: string; enabled: boolean }): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/communes/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateCommuneStatus = async (id: string, enabled: number): Promise<void> => {
+    await axios.patch(`${API_URL}/api/admin/communes/${id}/toggle`, {
+      enabled,
+    }, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteCommune = async (id: string): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/communes/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Méthodes pour la gestion des quartiers
+  getQuartiers = async (): Promise<QuartierAdmin[]> => {
+    const response = await axios.get(`${API_URL}/api/admin/quartiers`, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data.data;
+  }
+
+  createQuartier = async (data: any): Promise<QuartierAdmin> => {
+    const response = await axios.post(`${API_URL}/api/admin/quartiers`, data, {
+      headers: this.getAuthHeaders(),
+    });
+    return response.data.data;
+  }
+
+  updateQuartier = async (id: string, data: any): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/quartiers/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateQuartierStatus = async (id: string, enabled: number): Promise<void> => {
+    await axios.patch(`${API_URL}/api/admin/quartiers/${id}/toggle`, {
+      enabled,
+    }, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteQuartier = async (id: string): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/quartiers/${id}`, {
       headers: this.getAuthHeaders(),
     });
   }

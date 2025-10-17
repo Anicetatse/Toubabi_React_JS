@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminService, DashboardStats, BienAdmin, ClientAdmin, CommandeAdmin, CategorieAdmin, AnnonceAdmin, CommentaireAdmin, TypeAnnonceAdmin, CaracteristiqueAdmin } from '@/services/adminService';
+import { adminService, DashboardStats, BienAdmin, ClientAdmin, CommandeAdmin, CategorieAdmin, AnnonceAdmin, CommentaireAdmin, TypeAnnonceAdmin, CaracteristiqueAdmin, VilleAdmin, CommuneAdmin, QuartierAdmin } from '@/services/adminService';
 import toast from 'react-hot-toast';
 
 // Hook pour les statistiques du dashboard
@@ -398,7 +398,7 @@ export function useCreateTypeAnnonce() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (data: { nom: string; description: string }) => 
+    mutationFn: (data: { nom: string }) => 
       adminService.createTypeAnnonce(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'type-annonces'] });
@@ -414,7 +414,7 @@ export function useUpdateTypeAnnonce() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { nom: string; description: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: { nom: string } }) =>
       adminService.updateTypeAnnonce(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'type-annonces'] });
@@ -509,6 +509,214 @@ export function useDeleteCaracteristique() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'caracteristiques'] });
       toast.success('Caractéristique supprimée avec succès');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';
+      toast.error(errorMessage, { duration: 5000 });
+    },
+  });
+}
+
+// Hook pour la gestion des villes
+export function useVilles() {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'villes'],
+    queryFn: adminService.getVilles,
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateVille() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: { nom: string }) => 
+      adminService.createVille(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'villes'] });
+      toast.success('Ville créée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateVille() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { nom: string } }) =>
+      adminService.updateVille(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'villes'] });
+      toast.success('Ville mise à jour avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour');
+    },
+  });
+}
+
+export function useDeleteVille() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: string) => adminService.deleteVille(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'villes'] });
+      toast.success('Ville supprimée avec succès');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';
+      toast.error(errorMessage, { duration: 5000 });
+    },
+  });
+}
+
+// Hook pour la gestion des communes
+export function useCommunes() {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'communes'],
+    queryFn: adminService.getCommunes,
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateCommune() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: { nom: string; id_ville: string; image?: string; enabled: boolean }) => 
+      adminService.createCommune(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'communes'] });
+      toast.success('Commune créée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateCommune() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { nom: string; id_ville: string; image?: string; enabled: boolean } }) =>
+      adminService.updateCommune(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'communes'] });
+      toast.success('Commune mise à jour avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour');
+    },
+  });
+}
+
+export function useUpdateCommuneStatus() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, enabled }: { id: string; enabled: number }) =>
+      adminService.updateCommuneStatus(id, enabled),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'communes'] });
+      toast.success('Statut de la commune mis à jour avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour du statut');
+    },
+  });
+}
+
+export function useDeleteCommune() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: string) => adminService.deleteCommune(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'communes'] });
+      toast.success('Commune supprimée avec succès');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';
+      toast.error(errorMessage, { duration: 5000 });
+    },
+  });
+}
+
+// Hook pour la gestion des quartiers
+export function useQuartiers() {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'quartiers'],
+    queryFn: adminService.getQuartiers,
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateQuartier() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => adminService.createQuartier(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'quartiers'] });
+      toast.success('Quartier créé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateQuartier() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      adminService.updateQuartier(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'quartiers'] });
+      toast.success('Quartier mis à jour avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour');
+    },
+  });
+}
+
+export function useUpdateQuartierStatus() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, enabled }: { id: string; enabled: number }) =>
+      adminService.updateQuartierStatus(id, enabled),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'quartiers'] });
+      toast.success('Statut du quartier mis à jour avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour du statut');
+    },
+  });
+}
+
+export function useDeleteQuartier() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: string) => adminService.deleteQuartier(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'quartiers'] });
+      toast.success('Quartier supprimé avec succès');
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';

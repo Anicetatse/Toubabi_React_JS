@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { 
   Search, 
   Edit, 
@@ -49,7 +48,6 @@ import { Label } from '@/components/ui/label';
 
 interface TypeAnnonceFormData {
   nom: string;
-  description: string;
 }
 
 export default function AdminTypeAnnoncesPage() {
@@ -62,8 +60,7 @@ export default function AdminTypeAnnoncesPage() {
   const [createDialog, setCreateDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; typeId?: string }>({ open: false });
   const [formData, setFormData] = useState<TypeAnnonceFormData>({
-    nom: '',
-    description: ''
+    nom: ''
   });
 
   const { data: typeAnnonces, isLoading, error, refetch } = useTypeAnnonces();
@@ -88,8 +85,7 @@ export default function AdminTypeAnnoncesPage() {
 
   // Filtrer les types d'annonces
   const filteredTypes = typeAnnonces?.filter(type => 
-    type.nom.toLowerCase().includes(search.toLowerCase()) ||
-    type.description?.toLowerCase().includes(search.toLowerCase())
+    type.nom.toLowerCase().includes(search.toLowerCase())
   ) || [];
 
   // Trier les types d'annonces
@@ -112,7 +108,7 @@ export default function AdminTypeAnnoncesPage() {
     createMutation.mutate(formData, {
       onSuccess: () => {
         setCreateDialog(false);
-        setFormData({ nom: '', description: '' });
+        setFormData({ nom: '' });
         refetch();
       }
     });
@@ -120,8 +116,7 @@ export default function AdminTypeAnnoncesPage() {
 
   const handleEdit = (type: any) => {
     setFormData({
-      nom: type.nom,
-      description: type.description || ''
+      nom: type.nom
     });
     setEditDialog({ open: true, type });
   };
@@ -133,7 +128,7 @@ export default function AdminTypeAnnoncesPage() {
         {
           onSuccess: () => {
             setEditDialog({ open: false });
-            setFormData({ nom: '', description: '' });
+            setFormData({ nom: '' });
             refetch();
           }
         }

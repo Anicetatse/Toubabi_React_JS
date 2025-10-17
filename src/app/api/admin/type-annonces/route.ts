@@ -4,16 +4,14 @@ import { prisma } from '@/lib/prisma';
 // GET - Liste tous les types d'annonces
 export async function GET(request: NextRequest) {
   try {
-    // Utiliser une requête SQL brute pour voir la structure réelle
     const typeAnnonces = await prisma.$queryRawUnsafe(`
       SELECT * FROM type_annonces ORDER BY id ASC
     `) as any[];
 
-    // Formater les données en fonction de la structure réelle
+    // Formater les données - utiliser libelle (la vraie colonne)
     const formatted = typeAnnonces.map(type => ({
       id: type.id.toString(),
-      nom: type.nom || type.name || type.libelle || 'Sans nom',
-      description: type.description || '',
+      nom: type.libelle || 'Sans nom',
       created_at: type.created_at ? new Date(type.created_at).toISOString() : null,
       updated_at: type.updated_at ? new Date(type.updated_at).toISOString() : null
     }));
@@ -35,7 +33,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { nom, description } = body;
+    const { nom } = body;
 
     // Validation
     if (!nom) {
@@ -45,58 +43,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Vérifier d'abord les colonnes disponibles
-    const columns = await prisma.$queryRawUnsafe(`
-      SHOW COLUMNS FROM type_annonces
-    `) as any[];
-    
-    const columnNames = columns.map((col: any) => col.Field);
-    console.log('Colonnes disponibles:', columnNames);
-
-    // Construire la requête INSERT en fonction des colonnes disponibles
-    let insertQuery = 'INSERT INTO type_annonces (';
-    const values: any[] = [];
-    const placeholders: string[] = [];
-
-    // Essayer différents noms de colonnes
-    if (columnNames.includes('nom')) {
-      insertQuery += 'nom';
-      values.push(nom);
-      placeholders.push('?');
-    } else if (columnNames.includes('name')) {
-      insertQuery += 'name';
-      values.push(nom);
-      placeholders.push('?');
-    } else if (columnNames.includes('libelle')) {
-      insertQuery += 'libelle';
-      values.push(nom);
-      placeholders.push('?');
-    }
-
-    if (columnNames.includes('description') && description) {
-      if (values.length > 0) insertQuery += ', ';
-      insertQuery += 'description';
-      values.push(description);
-      placeholders.push('?');
-    }
-
-    if (columnNames.includes('created_at')) {
-      if (values.length > 0) insertQuery += ', ';
-      insertQuery += 'created_at';
-      values.push(new Date());
-      placeholders.push('?');
-    }
-
-    if (columnNames.includes('updated_at')) {
-      if (values.length > 0) insertQuery += ', ';
-      insertQuery += 'updated_at';
-      values.push(new Date());
-      placeholders.push('?');
-    }
-
-    insertQuery += `) VALUES (${placeholders.join(', ')})`;
-
-    await prisma.$queryRawUnsafe(insertQuery, ...values);
+    // Utiliser libelle (vraie colonne dans la BD)
+    await prisma.$queryRawUnsafe(`
+      INSERT INTO type_annonces (libelle, created_at, updated_at)
+      VALUES (?, ?, ?)
+    `, nom, new Date(), new Date());
 
     return NextResponse.json({
       success: true,
