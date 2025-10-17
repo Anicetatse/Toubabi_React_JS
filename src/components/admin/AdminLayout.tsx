@@ -476,21 +476,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         {/* Top bar Pro */}
         <header className="flex h-16 items-center justify-between border-b bg-white px-4 lg:px-8 shadow-sm">
           <div className="flex items-center gap-4">
-          <button
-            onClick={() => setSidebarOpen(true)}
+            <button
+              onClick={() => setSidebarOpen(true)}
               className="text-gray-500 hover:text-gray-700 lg:hidden hover:bg-gray-100 p-2 rounded-lg transition-colors"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-            <div className="hidden lg:block">
-              <h1 className="text-xl font-bold text-gray-900">
-                {pathname === '/admin/dashboard' && 'Dashboard'}
-                {pathname === '/admin/biens' && 'Gestion des Biens'}
-                {pathname === '/admin/clients' && 'Gestion des Utilisateurs'}
-                {pathname === '/admin/categories' && 'Gestion des Catégories'}
-                {pathname === '/admin/commandes' && 'Gestion des Commandes'}
-              </h1>
-            </div>
+            >
+              <Menu className="h-6 w-6" />
+            </button>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/" target="_blank">

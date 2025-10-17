@@ -242,7 +242,8 @@ export function useDeleteCategorie() {
       toast.success('Catégorie supprimée avec succès');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression');
+      const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';
+      toast.error(errorMessage, { duration: 5000 });
     },
   });
 }

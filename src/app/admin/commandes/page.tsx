@@ -193,7 +193,7 @@ export default function AdminCommandesPage() {
         {/* Filtres et recherche */}
         <Card>
           <CardContent className="p-6">
-            <div className="flex gap-4">
+            <div className= "flex gap-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -362,14 +362,8 @@ export default function AdminCommandesPage() {
                       <tr key={commande.id} className="border-b hover:bg-gray-50">
                         <td className="py-4 px-4">
                           <div>
-                            <p className="font-medium text-gray-900">CMD-{commande.id}</p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(commande.created_at).toLocaleDateString('fr-FR', { 
-                                day: '2-digit', 
-                                month: '2-digit', 
-                                year: 'numeric' 
-                              })}
-                            </p>
+                            <p className="font-medium text-gray-900">Numéro de commande : {commande.id}</p>
+                            
                           </div>
                       </td>
                         <td className="py-4 px-4">
@@ -378,7 +372,7 @@ export default function AdminCommandesPage() {
                         <td className="py-4 px-4">
                           <div>
                             <p className="text-sm text-gray-900">{commande.email || 'N/A'}</p>
-                            <p className="text-xs text-gray-600">{commande.numero || 'N/A'}</p>
+                            <p className="text-sm text-gray-900">{commande.numero || 'N/A'}</p>
                           </div>
                         </td>
                         <td className="py-4 px-4">
@@ -396,9 +390,21 @@ export default function AdminCommandesPage() {
                           {getStatutBadge(commande.status)}
                         </td>
                         <td className="py-4 px-4">
-                          <p className="text-sm text-gray-600">
-                            {new Date(commande.created_at).toLocaleDateString('fr-FR')}
-                          </p>
+                          <div className="text-sm text-gray-900">
+                            <p>
+                              {new Date(commande.created_at).toLocaleDateString('fr-FR', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric'
+                              })}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              à {new Date(commande.created_at).toLocaleTimeString('fr-FR', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
                         </td>
                         <td className="py-4 px-4">
                           <DropdownMenu>

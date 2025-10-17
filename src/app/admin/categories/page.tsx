@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { Pagination } from '@/components/admin/Pagination';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +16,10 @@ import {
   Trash2, 
   Plus,
   MoreHorizontal,
-  Tag
+  Tag,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { useAdminCategories, useCreateCategorie, useUpdateCategorie, useDeleteCategorie } from '@/hooks/useAdmin';
 import {
@@ -52,6 +57,10 @@ interface CategorieFormData {
 
 export default function AdminCategoriesPage() {
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<'nom' | 'nombre_produits'>('nom');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const itemsPerPage = 10;
   const [editDialog, setEditDialog] = useState<{ open: boolean; categorie?: any }>({ open: false });
   const [createDialog, setCreateDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; categorieCode?: string }>({ open: false });
@@ -67,9 +76,41 @@ export default function AdminCategoriesPage() {
   const updateMutation = useUpdateCategorie();
   const deleteMutation = useDeleteCategorie();
 
+  // Réinitialiser la page quand on change la recherche
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  // Fonction de tri
+  const handleSort = (field: 'nom' | 'nombre_produits') => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  // Filtrer les catégories
   const filteredCategories = categories?.filter(cat => 
     cat.nom.toLowerCase().includes(search.toLowerCase())
-  );
+  ) || [];
+
+  // Trier les catégories
+  const sortedCategories = [...filteredCategories].sort((a, b) => {
+    let aValue: any = a[sortField];
+    let bValue: any = b[sortField];
+
+    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // Pagination côté client
+  const totalPages = Math.ceil(sortedCategories.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCategories = sortedCategories.slice(startIndex, endIndex);
 
   const handleCreate = () => {
     // Le code sera généré automatiquement dans l'API à partir du nom
@@ -149,7 +190,6 @@ export default function AdminCategoriesPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestion des Catégories</h1>
             <p className="text-gray-600">
               Gérez toutes les catégories de biens immobiliers
             </p>
@@ -239,27 +279,41 @@ export default function AdminCategoriesPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Nom</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Code</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Produits</th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('nom')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Nom
+                        {sortField === 'nom' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('nombre_produits')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Nombre d'annonces
+                        {sortField === 'nombre_produits' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Type</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Statut</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Date</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCategories?.length ? (
-                    filteredCategories.map((categorie) => (
+                  {paginatedCategories.length > 0 ? (
+                    paginatedCategories.map((categorie) => (
                       <tr key={categorie.code} className="border-b hover:bg-gray-50">
                         <td className="py-4 px-4">
                           <p className="font-medium text-gray-900">{categorie.nom}</p>
                         </td>
-                        <td className="py-4 px-4">
-                          <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                            {categorie.code}
-                          </code>
-                        </td>
+                        
                         <td className="py-4 px-4">
                           <Badge variant="outline">
                             {categorie.nombre_produits} bien(s)
@@ -280,11 +334,7 @@ export default function AdminCategoriesPage() {
                             {categorie.enabled ? 'Actif' : 'Inactif'}
                           </Badge>
                         </td>
-                        <td className="py-4 px-4">
-                          <p className="text-sm text-gray-600">
-                            {new Date(categorie.created_at).toLocaleDateString('fr-FR')}
-                          </p>
-                        </td>
+                        
                         <td className="py-4 px-4">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -298,12 +348,20 @@ export default function AdminCategoriesPage() {
                                 Modifier
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleDelete(categorie.code)}
+                                onClick={() => {
+                                  if ((categorie.nombre_produits || 0) > 0) {
+                                    toast.error(
+                                      `Impossible de supprimer la catégorie. ${categorie.nombre_produits} produit(s) y sont liés.`,
+                                      { duration: 5000 }
+                                    );
+                                  } else {
+                                    handleDelete(categorie.code);
+                                  }
+                                }}
                                 className="text-red-600"
-                                disabled={(categorie.nombre_produits || 0) > 0}
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
-                                Supprimer
+                                Supprimer {(categorie.nombre_produits || 0) > 0 && `(${categorie.nombre_produits} produit(s))`}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -320,6 +378,17 @@ export default function AdminCategoriesPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Pro */}
+            {sortedCategories.length > itemsPerPage && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={sortedCategories.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+              />
+            )}
           </CardContent>
         </Card>
 

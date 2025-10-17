@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { Pagination } from '@/components/admin/Pagination';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +16,10 @@ import {
   Plus,
   Filter,
   MoreHorizontal,
-  Users
+  Users,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { useAdminClients, useToggleClientStatus, useDeleteClient } from '@/hooks/useAdmin';
 import {
@@ -36,13 +40,63 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function AdminClientsPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<'nom' | 'email' | 'created_at'>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const itemsPerPage = 10;
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; clientId?: number }>({ open: false });
 
-  const { data: clientsData, isLoading, error } = useAdminClients(page, 10, search);
+  // Charger tous les clients
+  const { data: clientsData, isLoading, error } = useAdminClients(1, 1000, '');
   const toggleStatusMutation = useToggleClientStatus();
   const deleteMutation = useDeleteClient();
+
+  // Réinitialiser la page quand on change la recherche
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchInput]);
+
+  // Fonction de tri
+  const handleSort = (field: 'nom' | 'email' | 'created_at') => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  // Filtrer les clients
+  const filteredClients = clientsData?.clients.filter(client => {
+    const searchLower = searchInput.toLowerCase();
+    return searchInput === '' || 
+      client.nom?.toLowerCase().includes(searchLower) ||
+      client.prenom?.toLowerCase().includes(searchLower) ||
+      client.email?.toLowerCase().includes(searchLower) ||
+      client.telephone?.toLowerCase().includes(searchLower);
+  }) || [];
+
+  // Trier les clients
+  const sortedClients = [...filteredClients].sort((a, b) => {
+    let aValue: any = a[sortField];
+    let bValue: any = b[sortField];
+
+    if (sortField === 'created_at') {
+      aValue = new Date(a.created_at).getTime();
+      bValue = new Date(b.created_at).getTime();
+    }
+
+    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // Pagination côté client
+  const totalPages = Math.ceil(sortedClients.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedClients = sortedClients.slice(startIndex, endIndex);
 
   const handleToggleStatus = (clientId: number, currentStatus: boolean) => {
     toggleStatusMutation.mutate({ id: clientId, enabled: !currentStatus });
@@ -104,8 +158,8 @@ export default function AdminClientsPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Rechercher par nom, email, téléphone..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -128,7 +182,7 @@ export default function AdminClientsPage() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Clients</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {clientsData?.total || 0}
+                    {filteredClients.length}
                   </p>
                 </div>
               </div>
@@ -178,18 +232,48 @@ export default function AdminClientsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Nom</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Email</th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('nom')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Nom
+                        {sortField === 'nom' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('email')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Email
+                        {sortField === 'email' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Téléphone</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Type</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Statut</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Date d'inscription</th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort('created_at')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Date d'inscription
+                        {sortField === 'created_at' ? (
+                          sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                        ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
+                      </div>
+                    </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {clientsData?.clients?.length ? (
-                    clientsData.clients.map((client) => (
+                  {paginatedClients.length > 0 ? (
+                    paginatedClients.map((client) => (
                       <tr key={client.id} className="border-b hover:bg-gray-50">
                         <td className="py-4 px-4">
                           <div>
@@ -273,29 +357,15 @@ export default function AdminClientsPage() {
               </table>
             </div>
 
-            {/* Pagination */}
-            {clientsData && clientsData.total > 10 && (
-              <div className="flex justify-center items-center gap-2 mt-6">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(Math.max(1, page - 1))}
-                  disabled={page === 1}
-                >
-                  Précédent
-                </Button>
-                <span className="text-sm text-gray-600">
-                  Page {page} sur {Math.ceil(clientsData.total / 10)}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(page + 1)}
-                  disabled={page >= Math.ceil(clientsData.total / 10)}
-                >
-                  Suivant
-                </Button>
-              </div>
+            {/* Pagination Pro */}
+            {sortedClients.length > itemsPerPage && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={sortedClients.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+              />
             )}
           </CardContent>
         </Card>
