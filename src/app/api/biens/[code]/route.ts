@@ -141,11 +141,11 @@ export async function GET(
       annonceur = annonceurResult[0] || null;
     }
 
-    // Récupérer les commentaires
+    // Récupérer les commentaires actifs uniquement
     const commentairesQuery = `
-      SELECT id, auteur as nom, contenu as commentaire, note, created_at
-      FROM commentaires_annonces 
-      WHERE produit_code = ? 
+      SELECT id, nom, commentaire, note, created_at
+      FROM commentaires 
+      WHERE produit_code = ? AND active = 1
       ORDER BY created_at DESC
     `;
     const commentaires = await prisma.$queryRawUnsafe<any[]>(commentairesQuery, code);

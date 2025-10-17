@@ -117,6 +117,20 @@ export interface AnnonceAdmin {
   updated_at?: string;
 }
 
+export interface CommentaireAdmin {
+  id: string;
+  nom: string;
+  commentaire: string;
+  note: number | null;
+  active: number;
+  produit_code: string;
+  produit_nom: string;
+  produit_image: string | null;
+  produit_type: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 class AdminService {
   private getAuthHeaders = () => {
     // Utiliser le token admin séparé
@@ -330,6 +344,60 @@ class AdminService {
     });
 
     return response.data.data;
+  }
+
+  // Méthodes pour la gestion des commentaires
+  getCommentaires = async (page: number, limit: number, search: string, status?: string): Promise<{
+    data: CommentaireAdmin[];
+    total: number;
+    page: number;
+    limit: number;
+    stats: {
+      total: number;
+      active: number;
+      inactive: number;
+      thisMonth: number;
+    };
+  }> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(search && { search }),
+      ...(status && { status }),
+    });
+
+    const response = await axios.get(`${API_URL}/api/admin/commentaires?${params}`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    return response.data;
+  }
+
+  updateCommentaireStatus = async (id: string, active: number): Promise<void> => {
+    await axios.patch(`${API_URL}/api/admin/commentaires/${id}`, {
+      active,
+    }, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteCommentaire = async (id: string): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/commentaires/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  getCommentairesStats = async (): Promise<{
+    total: number;
+    active: number;
+    inactive: number;
+    thisMonth: number;
+  }> => {
+    const response = await axios.get(`${API_URL}/api/admin/commentaires/stats`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    return response.data;
   }
 }
 

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminService, DashboardStats, BienAdmin, ClientAdmin, CommandeAdmin, CategorieAdmin, AnnonceAdmin } from '@/services/adminService';
+import { adminService, DashboardStats, BienAdmin, ClientAdmin, CommandeAdmin, CategorieAdmin, AnnonceAdmin, CommentaireAdmin } from '@/services/adminService';
 import toast from 'react-hot-toast';
 
 // Hook pour les statistiques du dashboard
@@ -324,6 +324,60 @@ export function useAnnoncesStats() {
   return useQuery({
     queryKey: ['admin', 'annonces', 'stats'],
     queryFn: adminService.getAnnoncesStats,
+    enabled: isAuthenticated,
+    refetchInterval: 30000, // Refetch toutes les 30 secondes
+  });
+}
+
+// Hook pour la gestion des commentaires
+export function useAdminCommentaires(page = 1, limit = 10, search = '', status?: string) {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'commentaires', page, limit, search, status],
+    queryFn: () => adminService.getCommentaires(page, limit, search, status),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useUpdateCommentaireStatus() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, active }: { id: string; active: number }) =>
+      adminService.updateCommentaireStatus(id, active),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'commentaires'] });
+      toast.success('Statut du commentaire mis à jour avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour du statut');
+    },
+  });
+}
+
+export function useDeleteCommentaire() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: string) => adminService.deleteCommentaire(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'commentaires'] });
+      toast.success('Commentaire supprimé avec succès');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la suppression';
+      toast.error(errorMessage, { duration: 5000 });
+    },
+  });
+}
+
+export function useCommentairesStats() {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'commentaires', 'stats'],
+    queryFn: adminService.getCommentairesStats,
     enabled: isAuthenticated,
     refetchInterval: 30000, // Refetch toutes les 30 secondes
   });

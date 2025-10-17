@@ -250,23 +250,16 @@ export default function BienDetailPage() {
         }),
       });
 
+      const result = await response.json();
+
       if (response.ok) {
-        showToast('Votre commentaire a été ajouté avec succès !', 'success');
+        showToast(result.message || 'Votre commentaire a été ajouté avec succès !', 'success');
         setCommentForm({ nom: '', commentaire: '', note: 5 });
+        
         // Recharger les données du bien pour afficher le nouveau commentaire
-        if (bien?.code) {
-          try {
-            const response = await fetch(`/api/biens/${bien.code}`);
-            if (response.ok) {
-              const result = await response.json();
-              setBien(result.success ? result.data : result);
-            }
-          } catch (error) {
-            console.error('Erreur lors du rechargement:', error);
-          }
-        }
+        await fetchBien();
       } else {
-        showToast('Erreur lors de l\'ajout du commentaire', 'error');
+        showToast(result.error || 'Erreur lors de l\'ajout du commentaire', 'error');
       }
     } catch (error) {
       console.error('Erreur:', error);

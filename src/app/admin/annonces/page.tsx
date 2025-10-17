@@ -180,10 +180,9 @@ export default function AdminAnnoncesPage() {
         code,
         enabled: currentStatus === 1 ? 0 : 1
       });
-      toast.success('Statut mis à jour avec succès');
       refetch();
     } catch (error) {
-      toast.error('Erreur lors de la mise à jour du statut');
+      // Les erreurs sont déjà gérées par le hook
     }
   };
 
@@ -234,11 +233,10 @@ export default function AdminAnnoncesPage() {
     
     try {
       await deleteMutation.mutateAsync(deleteDialog.annonce.code);
-      toast.success('Annonce supprimée avec succès');
       setDeleteDialog({ open: false, annonce: null });
       refetch();
     } catch (error) {
-      toast.error('Erreur lors de la suppression');
+      // Les erreurs sont déjà gérées par le hook
     }
   };
 

@@ -64,19 +64,26 @@ export const produitService = {
   },
 
   async addComment(
-    produitId: number,
-    contenu: string
+    produit_code: string,
+    data: {
+      nom: string;
+      commentaire: string;
+      note: number; // 1-5
+    }
   ): Promise<Commentaire> {
     const response = await apiClient.post<ApiResponse<Commentaire>>(
-      `/biens/${produitId}/commentaires`,
-      { contenu }
+      `/commentaires`,
+      { ...data, produit_code }
     );
     return response.data.data!;
   },
 
-  async getComments(produitId: number): Promise<Commentaire[]> {
+  async getComments(produit_code: string): Promise<Commentaire[]> {
     const response = await apiClient.get<ApiResponse<Commentaire[]>>(
-      `/biens/${produitId}/commentaires`
+      `/commentaires`,
+      {
+        params: { produit_code }
+      }
     );
     return response.data.data!;
   },

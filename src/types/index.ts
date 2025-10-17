@@ -161,11 +161,14 @@ export interface CommandeDetail {
 
 export interface Commentaire {
   id: number;
-  contenu: string;
-  user_id: number;
-  produit_id: number;
-  user?: User;
+  nom: string;           // Nom de l'auteur du commentaire
+  commentaire: string;   // Texte du commentaire
+  note: number | null;   // Note de 1 à 5 étoiles (nullable)
+  active: number;        // 1 = actif/approuvé, 0 = en modération
+  produit_code: string;  // Code du produit associé
   created_at: string;
+  updated_at?: string;
+  produit?: Produit;     // Relation optionnelle avec le produit
 }
 
 // Services
