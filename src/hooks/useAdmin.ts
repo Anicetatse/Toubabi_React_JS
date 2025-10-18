@@ -1002,3 +1002,60 @@ export function useDeletePrix() {
     },
   });
 }
+
+// ==================== HOOKS POUR LES ESTIMATIONS ====================
+
+export function useAdminEstimations(page = 1, limit = 10, search = '') {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'estimations', page, limit, search],
+    queryFn: () => adminService.getEstimations(page, limit, search),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateEstimation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => adminService.createEstimation(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'estimations'] });
+      toast.success('Estimation créée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateEstimation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => adminService.updateEstimation(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'estimations'] });
+      toast.success('Estimation modifiée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeleteEstimation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deleteEstimation(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'estimations'] });
+      toast.success('Estimation supprimée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression');
+    },
+  });
+}

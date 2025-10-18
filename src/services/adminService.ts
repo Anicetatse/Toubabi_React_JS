@@ -787,6 +787,33 @@ class AdminService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  // Méthodes pour la gestion des estimations
+  getEstimations = async (page = 1, limit = 10, search = ''): Promise<any> => {
+    const response = await axios.get(`${API_URL}/api/admin/estimations`, {
+      params: { page, limit, search },
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  createEstimation = async (data: any): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/estimations`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateEstimation = async (id: number, data: any): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/estimations/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteEstimation = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/estimations/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
 }
 
 export const adminService = new AdminService();
