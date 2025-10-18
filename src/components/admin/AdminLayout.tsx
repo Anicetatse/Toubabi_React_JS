@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,8 @@ import {
   Percent,
   Heart,
   Globe,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -34,6 +37,7 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const [adminUser, setAdminUser] = useState<any>(null);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -51,8 +55,23 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           console.error('Erreur parsing admin user:', error);
         }
       }
+
+      // Charger l'état du menu plié/déplié
+      const storedCollapsed = localStorage.getItem('admin_sidebar_collapsed');
+      if (storedCollapsed) {
+        setSidebarCollapsed(storedCollapsed === 'true');
+      }
     }
   }, []);
+
+  // Sauvegarder l'état du menu
+  const toggleSidebarCollapsed = () => {
+    const newState = !sidebarCollapsed;
+    setSidebarCollapsed(newState);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('admin_sidebar_collapsed', String(newState));
+    }
+  };
 
   const toggleMenu = (menuName: string) => {
     setExpandedMenus(prev => 
@@ -170,9 +189,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Sidebar Pro - Style Créance Exact */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform text-white transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 transform text-white transition-all duration-300 ease-in-out lg:relative lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        } ${sidebarCollapsed ? 'w-20' : 'w-64'}`}
         style={{
           background: '#032211',
           height: '100%',
@@ -216,17 +235,26 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <div 
                 className="mx-auto transition-all duration-300 group-hover:scale-105"
                 style={{
-                  width: '100px',
-                  height: '100px',
+                  width: sidebarCollapsed ? '50px' : '100px',
+                  height: sidebarCollapsed ? '50px' : '100px',
                   background: 'white',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+                  overflow: 'hidden',
+                  padding: '5px',
                 }}
               >
-                <Building2 style={{ width: '50px', height: '50px', color: '#032211' }} />
+                <Image 
+                  src="/assets/img/logo2.png" 
+                  alt="Toubabi Logo" 
+                  width={sidebarCollapsed ? 55 : 110}
+                  height={sidebarCollapsed ? 55 : 110}
+                  style={{ objectFit: 'contain' }}
+                  priority
+                />
               </div>
             </Link>
             <button
@@ -237,7 +265,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </button>
           </div>
 
-          <div style={{ height: '48px' }}></div>
+          {/* Bouton plier/déplier */}
+          <div className="hidden lg:flex justify-center mb-4">
+            <button
+              onClick={toggleSidebarCollapsed}
+              className="p-2.5 bg-white/10 hover:bg-white/20 rounded-lg transition-all border border-white/20 hover:scale-105 shadow-lg"
+              title={sidebarCollapsed ? 'Déplier le menu' : 'Plier le menu'}
+            >
+              {sidebarCollapsed ? (
+                <ChevronsRight className="h-5 w-5 text-white" />
+              ) : (
+                <ChevronsLeft className="h-5 w-5 text-white" />
+              )}
+            </button>
+          </div>
 
           {/* Navigation - Style Créance EXACT */}
           <nav 
@@ -272,7 +313,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     <div
                       onClick={() => sectionHasSubmenus && toggleMenu(section.title)}
                       style={{
-                        padding: '14px 20px',
+                        padding: sidebarCollapsed ? '14px' : '14px 20px',
                         backgroundColor: isSectionActive ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
                         color: isSectionActive ? '#FFFFFF' : '#9CA3AF',
                         cursor: 'pointer',
@@ -286,10 +327,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                         overflow: 'hidden',
                         display: 'flex',
                         alignItems: 'center',
+                        justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
                         gap: '12px',
                         fontSize: '14px',
                         fontWeight: isSectionActive ? 600 : 500,
                       }}
+                      title={sidebarCollapsed ? section.title : ''}
                     >
                       {/* Indicateur de sélection - EXACT Créance */}
                       {isSectionActive && (
@@ -330,21 +373,23 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       </div>
                       
                       {/* Texte du menu */}
-                      <span
-                        style={{
-                          flex: 1,
-                          fontSize: '14px',
-                          fontWeight: isSectionActive ? 600 : 500,
-                          color: isSectionActive ? '#FFFFFF' : '#fff',
-                          position: 'relative',
-                          zIndex: 2,
-                        }}
-                      >
-                        {section.title}
-                      </span>
+                      {!sidebarCollapsed && (
+                        <span
+                          style={{
+                            flex: 1,
+                            fontSize: '14px',
+                            fontWeight: isSectionActive ? 600 : 500,
+                            color: isSectionActive ? '#FFFFFF' : '#fff',
+                            position: 'relative',
+                            zIndex: 2,
+                          }}
+                        >
+                          {section.title}
+                        </span>
+                      )}
                       
                       {/* Flèche pour les sous-menus */}
-                      {sectionHasSubmenus && (
+                      {sectionHasSubmenus && !sidebarCollapsed && (
                         <div
                           style={{
                             color: '#fff',
@@ -368,7 +413,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     </div>
                     
                     {/* Sous-menus - Style Créance EXACT - Chaque ligne séparée */}
-                    {sectionHasSubmenus && isSectionExpanded && (
+                    {sectionHasSubmenus && isSectionExpanded && !sidebarCollapsed && (
                       <div
                         style={{
                           marginLeft: '16px',
@@ -442,34 +487,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </div>
           </nav>
 
-          {/* Admin info - Design Pro Créance */}
-          <div className="border-t border-white/10 bg-black/20 backdrop-blur-sm p-4 space-y-3">
-            <div className="flex items-center gap-3 px-3 py-3 bg-white/5 rounded-lg border border-white/10">
-              <div className="relative">
-                <div className="w-11 h-11 bg-gradient-to-br from-white to-gray-200 rounded-xl flex items-center justify-center text-[#1a3a2e] font-bold text-base shadow-lg">
-                  {adminUser?.name?.charAt(0).toUpperCase() || 'A'}
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-[#1a3a2e] animate-pulse"></div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-white truncate">
-                  {adminUser?.name || 'Administrateur'}
-                </div>
-                <div className="text-xs text-gray-400 truncate">{adminUser?.email || ''}</div>
-                <div className="text-[10px] text-gray-500 uppercase font-semibold tracking-wider mt-0.5">
-                  Administrateur
-                </div>
-              </div>
-            </div>
-            
-            <Button
-              onClick={handleLogout}
-              className="w-full !bg-white/5 !text-gray-300 hover:!bg-red-600/20 hover:!text-red-400 !border !border-white/10 hover:!border-red-500/30 transition-all duration-200 !rounded-lg !py-2.5"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Déconnexion
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -485,14 +502,44 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <Menu className="h-6 w-6" />
             </button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Link href="/" target="_blank">
               <Button variant="outline" size="sm" className="gap-2">
                 <Globe className="h-4 w-4" />
                 Voir le site
               </Button>
             </Link>
-            
+
+            {/* Info admin - Cliquable */}
+            <Link href="/admin/profil">
+              <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-gray-50 hover:bg-blue-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-all cursor-pointer group">
+                <div className="relative">
+                  <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:scale-105 transition-transform">
+                    {adminUser?.name?.charAt(0).toUpperCase() || 'A'}
+                  </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                    {adminUser?.name || 'Administrateur'}
+                  </div>
+                  <div className="text-xs text-gray-500 truncate">
+                    {adminUser?.email || ''}
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            {/* Bouton de déconnexion */}
+            <Button 
+              onClick={handleLogout}
+              variant="outline" 
+              size="sm" 
+              className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Déconnexion</span>
+            </Button>
           </div>
         </header>
 

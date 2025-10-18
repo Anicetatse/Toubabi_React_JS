@@ -319,7 +319,7 @@ export default function AdminSousCategoriesPage() {
                       onClick={() => handleSort('nom')}
                     >
                       <div className="flex items-center gap-2">
-                        Nom
+                        Sous Catégorie
                         {sortField === 'nom' ? (
                           sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
                         ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
@@ -330,7 +330,7 @@ export default function AdminSousCategoriesPage() {
                       onClick={() => handleSort('categorie_nom')}
                     >
                       <div className="flex items-center gap-2">
-                        Catégorie Parente
+                        Catégorie
                         {sortField === 'categorie_nom' ? (
                           sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
                         ) : <ArrowUpDown className="h-4 w-4 text-gray-400" />}
@@ -426,7 +426,7 @@ export default function AdminSousCategoriesPage() {
             <div className="space-y-5 py-2">
               <div className="space-y-2">
                 <Label htmlFor="nom" className="text-sm font-semibold text-gray-700">
-                  Nom *
+                  Sous Catégorie *
                 </Label>
                 <Input
                   id="nom"
@@ -438,7 +438,7 @@ export default function AdminSousCategoriesPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="code_cat" className="text-sm font-semibold text-gray-700">
-                  Catégorie Parente *
+                  Catégorie *
                 </Label>
                 <Select
                   value={formData.code_cat}
@@ -510,7 +510,7 @@ export default function AdminSousCategoriesPage() {
             <div className="space-y-5 py-2">
               <div className="space-y-2">
                 <Label htmlFor="edit-nom" className="text-sm font-semibold text-gray-700">
-                  Nom *
+                  Sous Catégorie *
                 </Label>
                 <Input
                   id="edit-nom"
@@ -522,7 +522,7 @@ export default function AdminSousCategoriesPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-code_cat" className="text-sm font-semibold text-gray-700">
-                  Catégorie Parente *
+                  Catégorie *
                 </Label>
                 <Select
                   value={formData.code_cat}

@@ -9,9 +9,10 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Mail, Lock, Eye, EyeOff, Shield } from 'lucide-react';
+import { Loader2, Mail, Lock, Eye, EyeOff, Shield, KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import Link from 'next/link';
 
 const adminLoginSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -164,6 +165,17 @@ export default function AdminLoginPage() {
                     {errors.password.message}
                   </p>
                 )}
+                
+                {/* Lien mot de passe oublié */}
+                <div className="mt-2 text-right">
+                  <Link 
+                    href="/admin/mot-de-passe-oublie"
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-1 hover:underline transition-colors"
+                  >
+                    <KeyRound className="h-4 w-4" />
+                    Mot de passe oublié ?
+                  </Link>
+                </div>
               </div>
             </div>
 
