@@ -841,6 +841,195 @@ class AdminService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  // Méthodes pour la gestion des banques
+  getBanques = async (page = 1, limit = 10, search = ''): Promise<any> => {
+    const response = await axios.get(`${API_URL}/api/admin/banques`, {
+      params: { page, limit, search },
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  createBanque = async (data: any): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/banques`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateBanque = async (id: number, data: any): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/banques/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteBanque = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/banques/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Méthodes pour la gestion des commerces
+  getCommerces = async (page = 1, limit = 10, search = ''): Promise<any> => {
+    const response = await axios.get(`${API_URL}/api/admin/commerces`, {
+      params: { page, limit, search },
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  createCommerce = async (data: any): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/commerces`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateCommerce = async (id: number, data: any): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/commerces/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteCommerce = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/commerces/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Méthodes pour la gestion des enseignements
+  getEnseignements = async (page = 1, limit = 10, search = ''): Promise<any> => {
+    const response = await axios.get(`${API_URL}/api/admin/enseignements`, {
+      params: { page, limit, search },
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  createEnseignement = async (data: any): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/enseignements`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateEnseignement = async (id: number, data: any): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/enseignements/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteEnseignement = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/enseignements/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Méthodes pour la gestion des hospitaliers
+  getHospitaliers = async (page = 1, limit = 10, search = ''): Promise<any> => {
+    const response = await axios.get(`${API_URL}/api/admin/hospitaliers`, {
+      params: { page, limit, search },
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  createHospitalier = async (data: any): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/hospitaliers`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateHospitalier = async (id: number, data: any): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/hospitaliers/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteHospitalier = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/hospitaliers/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Méthodes pour la gestion des services publics
+  getServicesPublics = async (page = 1, limit = 10, search = ''): Promise<any> => {
+    const response = await axios.get(`${API_URL}/api/admin/services-publics`, {
+      params: { page, limit, search },
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  createServicePublic = async (data: any): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/services-publics`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateServicePublic = async (id: number, data: any): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/services-publics/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteServicePublic = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/services-publics/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Méthodes pour la gestion des stations
+  getStations = async (page = 1, limit = 10, search = ''): Promise<any> => {
+    const response = await axios.get(`${API_URL}/api/admin/stations`, {
+      params: { page, limit, search },
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  createStation = async (data: any): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/stations`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateStation = async (id: number, data: any): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/stations/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteStation = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/stations/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Méthodes pour la gestion des industries
+  getIndustries = async (page = 1, limit = 10, search = ''): Promise<any> => {
+    const response = await axios.get(`${API_URL}/api/admin/industries`, {
+      params: { page, limit, search },
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  createIndustrie = async (data: any): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/industries`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateIndustrie = async (id: number, data: any): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/industries/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteIndustrie = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/industries/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
 }
 
 export const adminService = new AdminService();

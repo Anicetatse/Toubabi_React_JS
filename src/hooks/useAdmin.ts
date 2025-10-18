@@ -1116,3 +1116,403 @@ export function useDeletePharmacie() {
     },
   });
 }
+
+// ==================== HOOKS POUR LES BANQUES ====================
+
+export function useAdminBanques(page = 1, limit = 10, search = '') {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'banques', page, limit, search],
+    queryFn: () => adminService.getBanques(page, limit, search),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateBanque() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => adminService.createBanque(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'banques'] });
+      toast.success('Banque créée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateBanque() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => adminService.updateBanque(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'banques'] });
+      toast.success('Banque modifiée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeleteBanque() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deleteBanque(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'banques'] });
+      toast.success('Banque supprimée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression');
+    },
+  });
+}
+
+// ==================== HOOKS POUR LES COMMERCES ====================
+
+export function useAdminCommerces(page = 1, limit = 10, search = '') {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'commerces', page, limit, search],
+    queryFn: () => adminService.getCommerces(page, limit, search),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateCommerce() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => adminService.createCommerce(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'commerces'] });
+      toast.success('Commerce créée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateCommerce() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => adminService.updateCommerce(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'commerces'] });
+      toast.success('Commerce modifiée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeleteCommerce() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deleteCommerce(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'commerces'] });
+      toast.success('Commerce supprimée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression');
+    },
+  });
+}
+
+// ==================== HOOKS POUR LES ENSEIGNEMENTS ====================
+
+export function useAdminEnseignements(page = 1, limit = 10, search = '') {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'enseignements', page, limit, search],
+    queryFn: () => adminService.getEnseignements(page, limit, search),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateEnseignement() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => adminService.createEnseignement(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'enseignements'] });
+      toast.success('Enseignement créé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateEnseignement() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => adminService.updateEnseignement(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'enseignements'] });
+      toast.success('Enseignement modifié avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeleteEnseignement() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deleteEnseignement(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'enseignements'] });
+      toast.success('Enseignement supprimé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression');
+    },
+  });
+}
+
+// ==================== HOOKS POUR LES HOSPITALIERS ====================
+
+export function useAdminHospitaliers(page = 1, limit = 10, search = '') {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'hospitaliers', page, limit, search],
+    queryFn: () => adminService.getHospitaliers(page, limit, search),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateHospitalier() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => adminService.createHospitalier(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'hospitaliers'] });
+      toast.success('Hospitalier créé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateHospitalier() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => adminService.updateHospitalier(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'hospitaliers'] });
+      toast.success('Hospitalier modifié avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeleteHospitalier() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deleteHospitalier(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'hospitaliers'] });
+      toast.success('Hospitalier supprimé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression');
+    },
+  });
+}
+
+// ==================== HOOKS POUR LES SERVICES_PUBLICS ====================
+
+export function useAdminServicesPublics(page = 1, limit = 10, search = '') {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'services_publics', page, limit, search],
+    queryFn: () => adminService.getServicesPublics(page, limit, search),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateServicePublic() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => adminService.createServicePublic(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'services_publics'] });
+      toast.success('ServicePublic créé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateServicePublic() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => adminService.updateServicePublic(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'services_publics'] });
+      toast.success('ServicePublic modifié avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeleteServicePublic() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deleteServicePublic(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'services_publics'] });
+      toast.success('ServicePublic supprimé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression');
+    },
+  });
+}
+
+// ==================== HOOKS POUR LES STATIONS ====================
+
+export function useAdminStations(page = 1, limit = 10, search = '') {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'stations', page, limit, search],
+    queryFn: () => adminService.getStations(page, limit, search),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateStation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => adminService.createStation(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stations'] });
+      toast.success('Station créé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateStation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => adminService.updateStation(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stations'] });
+      toast.success('Station modifié avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeleteStation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deleteStation(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stations'] });
+      toast.success('Station supprimé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression');
+    },
+  });
+}
+
+// ==================== HOOKS POUR LES INDUSTRIES ====================
+
+export function useAdminIndustries(page = 1, limit = 10, search = '') {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'industries', page, limit, search],
+    queryFn: () => adminService.getIndustries(page, limit, search),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateIndustrie() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => adminService.createIndustrie(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'industries'] });
+      toast.success('Industrie créée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateIndustrie() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => adminService.updateIndustrie(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'industries'] });
+      toast.success('Industrie modifiée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeleteIndustrie() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deleteIndustrie(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'industries'] });
+      toast.success('Industrie supprimée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression');
+    },
+  });
+}
+
