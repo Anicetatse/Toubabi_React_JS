@@ -556,55 +556,56 @@ export default function ModifierAnnoncePage() {
                             )}
                           </div>
 
-                          {/* Sous-catégorie */}
-                          <div className="form-group">
-                            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Sous Type de bien</label>
-                            <Controller
-                              name="souscategorie"
-                              control={control}
-                              render={({ field }) => (
-                                <select 
-                                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                                    !categorieId ? 'border-gray-200 bg-gray-50' : 'border-gray-300'
-                                  }`}
-                                  value={field.value || ''}
-                                  onChange={(e) => field.onChange(e.target.value)}
-                                  disabled={!categorieId}
-                                >
-                                  <option value="">
-                                    {!categorieId ? 'Sélectionnez d\'abord un type de bien' : 'Peu importe'}
-                                  </option>
-                                  {sousCategoriesData.map((sousCategorie: any) => (
-                                    <option key={sousCategorie.code} value={sousCategorie.code}>
-                                      {sousCategorie.nom}
+                          {/* Sous-catégorie et Prix */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="form-group">
+                              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Sous Type de bien</label>
+                              <Controller
+                                name="souscategorie"
+                                control={control}
+                                render={({ field }) => (
+                                  <select 
+                                    className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                      !categorieId ? 'border-gray-200 bg-gray-50' : 'border-gray-300'
+                                    }`}
+                                    value={field.value || ''}
+                                    onChange={(e) => field.onChange(e.target.value)}
+                                    disabled={!categorieId}
+                                  >
+                                    <option value="">
+                                      {!categorieId ? 'Sélectionnez d\'abord un type de bien' : 'Peu importe'}
                                     </option>
-                                  ))}
-                                </select>
-                              )}
-                            />
-                          </div>
+                                    {sousCategoriesData.map((sousCategorie: any) => (
+                                      <option key={sousCategorie.code} value={sousCategorie.code}>
+                                        {sousCategorie.nom}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+                              />
+                            </div>
 
-                          {/* Prix */}
-                          <div className="form-group">
-                            <label>Prix en FCFA *</label>
-                            <Controller
-                              name="prix"
-                              control={control}
-                              render={({ field }) => (
-                                <input
-                                  type="text"
-                                  placeholder="Ex: 500 000"
-                                  className="w-full"
-                                  value={field.value ? formatPrice(field.value.toString()) : ''}
-                                  onChange={(e) => {
-                                    const formatted = formatPrice(e.target.value);
-                                    const numericValue = getNumericPrice(formatted);
-                                    field.onChange(numericValue);
-                                  }}
-                                />
-                              )}
-                            />
-                            {errors.prix && <p className="text-xs sm:text-sm text-red-600 mt-1">{errors.prix.message}</p>}
+                            <div className="form-group">
+                              <label>Prix en FCFA *</label>
+                              <Controller
+                                name="prix"
+                                control={control}
+                                render={({ field }) => (
+                                  <input
+                                    type="text"
+                                    placeholder="Ex: 500 000"
+                                    className="w-full"
+                                    value={field.value ? formatPrice(field.value.toString()) : ''}
+                                    onChange={(e) => {
+                                      const formatted = formatPrice(e.target.value);
+                                      const numericValue = getNumericPrice(formatted);
+                                      field.onChange(numericValue);
+                                    }}
+                                  />
+                                )}
+                              />
+                              {errors.prix && <p className="text-xs sm:text-sm text-red-600 mt-1">{errors.prix.message}</p>}
+                            </div>
                           </div>
                         </div>
 
