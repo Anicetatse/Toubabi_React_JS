@@ -925,3 +925,80 @@ export function useDeletePermission() {
     },
   });
 }
+
+// Hooks pour la gestion des prix
+export function useAdminPrix(page = 1, limit = 10, search = '') {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'prix', page, limit, search],
+    queryFn: () => adminService.getPrix(page, limit, search),
+    enabled: isAuthenticated,
+  });
+}
+
+export function usePrixReferences() {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'prix', 'references'],
+    queryFn: () => adminService.getPrixReferences(),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useSousCategories(categorieCode: string) {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'prix', 'souscategories', categorieCode],
+    queryFn: () => adminService.getSousCategories(categorieCode),
+    enabled: isAuthenticated && !!categorieCode,
+  });
+}
+
+export function useCreatePrix() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => adminService.createPrix(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'prix'] });
+      toast.success('Prix créé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdatePrix() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
+      adminService.updatePrix(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'prix'] });
+      toast.success('Prix modifié avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeletePrix() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deletePrix(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'prix'] });
+      toast.success('Prix supprimé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression');
+    },
+  });
+}

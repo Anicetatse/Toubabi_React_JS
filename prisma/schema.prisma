@@ -101,6 +101,7 @@ model quartiers {
   prix_moyen        BigInt?
   
   commune           communes    @relation(fields: [id_commune], references: [id])
+  prix              prix[]
   
   @@index([id_commune])
   @@map("quartiers")
@@ -118,6 +119,7 @@ model categories {
   
   souscategories souscategories[]
   produits       produits[]
+  prix           prix[]
 }
 
 model souscategories {
@@ -132,6 +134,7 @@ model souscategories {
   updated_at  DateTime?  @db.Timestamp(0)
   
   categorie   categories @relation(fields: [code_cat], references: [code])
+  prix        prix[]
   
   @@index([code_cat])
 }
@@ -253,6 +256,459 @@ model contacts {
   message     String    @db.VarChar(255)
   created_at  DateTime? @db.Timestamp(0)
   updated_at  DateTime? @db.Timestamp(0)
+}
+
+model prix {
+  id                    BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  id_quartier          BigInt?  @db.UnsignedBigInt
+  code_categorie       String?  @db.VarChar(255)
+  code_sous_categorie  String?  @db.VarChar(255)
+  prix_min_location    BigInt?
+  prix_moy_location    BigInt?
+  prix_max_location    BigInt?
+  prix_min_vente       BigInt?
+  prix_moy_vente       BigInt?
+  prix_max_vente       BigInt?
+  created_at           DateTime?
+  updated_at           DateTime?
+  
+  quartier             quartiers? @relation(fields: [id_quartier], references: [id])
+  categorie            categories? @relation(fields: [code_categorie], references: [code])
+  souscategorie       souscategories? @relation(fields: [code_sous_categorie], references: [code])
+  
+  @@index([id_quartier])
+  @@index([code_categorie])
+  @@index([code_sous_categorie])
+}
+
+// Tables de gestion des rôles et permissions (Laravel Spatie)
+model roles {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  name        String   @db.VarChar(255)
+  guard_name  String   @db.VarChar(255)
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  model_has_roles        model_has_roles[]
+  role_has_permissions   role_has_permissions[]
+}
+
+model permissions {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  name        String   @db.VarChar(255)
+  guard_name  String   @db.VarChar(255)
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  model_has_permissions model_has_permissions[]
+  role_has_permissions role_has_permissions[]
+}
+
+model model_has_roles {
+  role_id    BigInt  @db.UnsignedBigInt
+  model_type String  @db.VarChar(255)
+  model_id   BigInt  @db.UnsignedBigInt
+  
+  role       roles   @relation(fields: [role_id], references: [id])
+  
+  @@id([role_id, model_type, model_id])
+  @@index([model_id])
+}
+
+model model_has_permissions {
+  permission_id BigInt  @db.UnsignedBigInt
+  model_type     String  @db.VarChar(255)
+  model_id       BigInt  @db.UnsignedBigInt
+  
+  permission     permissions @relation(fields: [permission_id], references: [id])
+  
+  @@id([permission_id, model_type, model_id])
+  @@index([model_id])
+}
+
+model role_has_permissions {
+  permission_id BigInt @db.UnsignedBigInt
+  role_id       BigInt @db.UnsignedBigInt
+  
+  permission    permissions @relation(fields: [permission_id], references: [id])
+  role          roles       @relation(fields: [role_id], references: [id])
+  
+  @@id([permission_id, role_id])
+}
+
+// Tables de gestion des caractéristiques
+model caracteristiques {
+  id            BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom           String?  @db.VarChar(255)
+  active        Int      @db.TinyInt
+  produit_code  String?  @db.VarChar(255)
+  created_at    DateTime?
+  updated_at    DateTime?
+  
+  @@index([produit_code])
+}
+
+model caracretistique_produits {
+  id                    BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  produit_code          String   @db.VarChar(255)
+  caracteristique_id     BigInt   @db.UnsignedBigInt
+  valeur                String?  @db.VarChar(255)
+  created_at            DateTime?
+  updated_at            DateTime?
+  
+  @@index([produit_code])
+  @@index([caracteristique_id])
+}
+
+// Tables de gestion des commandes détaillées
+model detailcommandes {
+  id            BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  commande_id   BigInt   @db.UnsignedBigInt
+  produit_code  String   @db.VarChar(255)
+  quantite      Int      @default(1)
+  prix_unitaire BigInt   @db.BigInt
+  prix_total    BigInt   @db.BigInt
+  created_at    DateTime?
+  updated_at    DateTime?
+  
+  @@index([commande_id])
+  @@index([produit_code])
+}
+
+// Tables de gestion des commentaires d'annonces
+model commentaires_annonces {
+  id            BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom           String   @db.VarChar(255)
+  email         String?  @db.VarChar(255)
+  commentaire   String   @db.Text
+  note          Int?     @db.TinyInt
+  produit_code  String   @db.VarChar(255)
+  active        Int      @default(1) @db.TinyInt
+  created_at    DateTime?
+  updated_at    DateTime?
+  
+  @@index([produit_code])
+}
+
+// Tables de gestion des articles et tags
+model articles {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  titre       String   @db.VarChar(255)
+  contenu     String   @db.LongText
+  image       String?  @db.VarChar(255)
+  slug        String?  @db.VarChar(255)
+  active      Int      @default(1) @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  article_has_tags article_has_tags[]
+}
+
+model tags {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom         String   @db.VarChar(255)
+  slug        String?  @db.VarChar(255)
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  article_has_tags article_has_tags[]
+}
+
+model article_has_tags {
+  article_id BigInt @db.UnsignedBigInt
+  tag_id     BigInt @db.UnsignedBigInt
+  
+  article    articles @relation(fields: [article_id], references: [id])
+  tag        tags     @relation(fields: [tag_id], references: [id])
+  
+  @@id([article_id, tag_id])
+}
+
+// Tables de gestion des services (structure réelle de la BD)
+model banques {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  id_commune  Int?
+  nom         String?  @db.VarChar(255)
+  description String?  @db.LongText
+  contact     String?  @db.VarChar(255)
+  active      Int      @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  @@index([id_commune])
+}
+
+model commerces {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  id_commune  Int?
+  nom         String?  @db.VarChar(255)
+  description String?  @db.LongText
+  contact     String?  @db.VarChar(255)
+  active      Int      @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  @@index([id_commune])
+}
+
+model enseignements {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  id_commune  Int?
+  nom         String?  @db.VarChar(255)
+  description String?  @db.LongText
+  contact     String?  @db.VarChar(255)
+  active      Int      @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  @@index([id_commune])
+}
+
+model hospitaliers {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  id_commune  Int?
+  nom         String?  @db.VarChar(255)
+  description String?  @db.LongText
+  contact     String?  @db.VarChar(255)
+  active      Int      @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  @@index([id_commune])
+}
+
+model hoteliers {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  id_commune  Int?
+  nom         String?  @db.VarChar(255)
+  description String?  @db.LongText
+  contact     String?  @db.VarChar(255)
+  active      Int      @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  @@index([id_commune])
+}
+
+model industries {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  id_commune  Int?
+  nom         String?  @db.VarChar(255)
+  description String?  @db.LongText
+  contact     String?  @db.VarChar(255)
+  active      Int      @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  @@index([id_commune])
+}
+
+model pharmaciede_gardes {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  id_commune  Int?
+  nom         String?  @db.VarChar(255)
+  description String?  @db.LongText
+  contact     String?  @db.VarChar(255)
+  active      Int      @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  @@index([id_commune])
+}
+
+model services_publics {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  id_commune  Int?
+  nom         String?  @db.VarChar(255)
+  description String?  @db.LongText
+  contact     String?  @db.VarChar(255)
+  active      Int      @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  @@index([id_commune])
+}
+
+model stations {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  id_commune  Int?
+  nom         String?  @db.VarChar(255)
+  description String?  @db.LongText
+  contact     String?  @db.VarChar(255)
+  active      Int      @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  @@index([id_commune])
+}
+
+// Tables de gestion des templates
+model templates {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom         String   @db.VarChar(255)
+  description String?  @db.Text
+  image       String?  @db.VarChar(255)
+  active      Int      @default(1) @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  template_images template_images[]
+}
+
+model templates2 {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom         String   @db.VarChar(255)
+  description String?  @db.Text
+  image       String?  @db.VarChar(255)
+  active      Int      @default(1) @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+}
+
+model template_images {
+  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  template_id  BigInt   @db.UnsignedBigInt
+  image        String   @db.VarChar(255)
+  ordre        Int      @default(0)
+  created_at   DateTime?
+  updated_at   DateTime?
+  
+  template     templates @relation(fields: [template_id], references: [id])
+  
+  @@index([template_id])
+}
+
+// Tables de gestion des menus
+model menus2s {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom         String   @db.VarChar(255)
+  lien        String?  @db.VarChar(255)
+  ordre       Int      @default(0)
+  parent_id   BigInt?  @db.UnsignedBigInt
+  active      Int      @default(1) @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  menu_images menu_images[]
+  sousmenus   sousmenus[]
+}
+
+model menu_images {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  menu_id   BigInt   @db.UnsignedBigInt
+  image     String   @db.VarChar(255)
+  ordre     Int      @default(0)
+  created_at DateTime?
+  updated_at DateTime?
+  
+  menu      menus2s  @relation(fields: [menu_id], references: [id])
+  
+  @@index([menu_id])
+}
+
+model sousmenus {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom         String   @db.VarChar(255)
+  lien        String?  @db.VarChar(255)
+  ordre       Int      @default(0)
+  menu_id     BigInt   @db.UnsignedBigInt
+  active      Int      @default(1) @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+  
+  menu        menus2s  @relation(fields: [menu_id], references: [id])
+  
+  @@index([menu_id])
+}
+
+// Tables de gestion des médias
+model image {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom         String   @db.VarChar(255)
+  chemin      String   @db.VarChar(255)
+  type        String?  @db.VarChar(255)
+  taille      BigInt?  @db.BigInt
+  created_at  DateTime?
+  updated_at  DateTime?
+}
+
+model video {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom         String   @db.VarChar(255)
+  chemin      String   @db.VarChar(255)
+  type        String?  @db.VarChar(255)
+  taille      BigInt?  @db.BigInt
+  duree       Int?     // en secondes
+  created_at  DateTime?
+  updated_at  DateTime?
+}
+
+// Tables de gestion des paramètres
+model settings {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  cle         String   @unique @db.VarChar(255)
+  valeur      String   @db.LongText
+  type        String?  @db.VarChar(255)
+  description String?  @db.Text
+  created_at  DateTime?
+  updated_at  DateTime?
+}
+
+// Tables de gestion des alertes et jobs
+model alertes {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  titre       String   @db.VarChar(255)
+  message     String   @db.Text
+  type        String?  @db.VarChar(255)
+  active      Int      @default(1) @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
+}
+
+model failed_jobs {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid       String   @unique @db.VarChar(255)
+  connection String   @db.Text
+  queue      String   @db.Text
+  payload    String   @db.LongText
+  exception  String   @db.LongText
+  failed_at  DateTime @default(now())
+}
+
+model jobs {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  queue      String   @db.VarChar(255)
+  payload    String   @db.LongText
+  attempts   Int      @db.TinyInt
+  reserved_at BigInt? @db.UnsignedBigInt
+  available_at BigInt @db.UnsignedBigInt
+  created_at BigInt   @db.UnsignedBigInt
+  
+  @@index([queue])
+}
+
+model migrations {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  migration String   @db.VarChar(255)
+  batch     Int
+}
+
+model password_resets {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  email       String   @db.VarChar(255)
+  token       String   @db.VarChar(255)
+  created_at  DateTime?
+  
+  @@index([email])
+}
+
+model gestion_padev {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nom         String   @db.VarChar(255)
+  description String?  @db.Text
+  active      Int      @default(1) @db.TinyInt
+  created_at  DateTime?
+  updated_at  DateTime?
 }
 
 model estimes {

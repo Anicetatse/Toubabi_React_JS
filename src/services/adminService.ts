@@ -744,6 +744,49 @@ class AdminService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  // Méthodes pour la gestion des prix
+  getPrix = async (page = 1, limit = 10, search = ''): Promise<any> => {
+    const response = await axios.get(`${API_URL}/api/admin/prix`, {
+      params: { page, limit, search },
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  getPrixReferences = async (): Promise<any> => {
+    const response = await axios.get(`${API_URL}/api/admin/prix/references`, {
+      params: { type: 'all' },
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  getSousCategories = async (categorieCode: string): Promise<any> => {
+    const response = await axios.get(`${API_URL}/api/admin/prix/references`, {
+      params: { type: 'souscategories', categorie: categorieCode },
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  createPrix = async (data: any): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/prix`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updatePrix = async (id: number, data: any): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/prix/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deletePrix = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/prix/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
 }
 
 export const adminService = new AdminService();
