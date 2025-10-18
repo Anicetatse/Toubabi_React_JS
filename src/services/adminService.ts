@@ -1030,6 +1030,33 @@ class AdminService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  // Méthodes pour la gestion des hoteliers
+  getHoteliers = async (page = 1, limit = 10, search = ''): Promise<any> => {
+    const response = await axios.get(`${API_URL}/api/admin/hoteliers`, {
+      params: { page, limit, search },
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  createHotelier = async (data: any): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/hoteliers`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateHotelier = async (id: number, data: any): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/hoteliers/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteHotelier = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/hoteliers/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
 }
 
 export const adminService = new AdminService();

@@ -483,6 +483,17 @@ model hoteliers {
   nom         String?  @db.VarChar(255)
   description String?  @db.LongText
   contact     String?  @db.VarChar(255)
+  videos      String?  @db.VarChar(255)
+  images1     String?  @db.VarChar(255)
+  images2     String?  @db.VarChar(255)
+  images3     String?  @db.VarChar(255)
+  images4     String?  @db.VarChar(255)
+  images5     String?  @db.VarChar(255)
+  images6     String?  @db.VarChar(255)
+  images7     String?  @db.VarChar(255)
+  images8     String?  @db.VarChar(255)
+  images9     String?  @db.VarChar(255)
+  images10    String?  @db.VarChar(255)
   active      Int      @db.TinyInt
   created_at  DateTime?
   updated_at  DateTime?

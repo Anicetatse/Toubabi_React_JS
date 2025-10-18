@@ -628,7 +628,7 @@ export default function AdminStationsPage() {
 
       {/* Dialog de création */}
       <Dialog open={createDialog.open} onOpenChange={(open: boolean) => setCreateDialog({ open })}>
-        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
               <div className="p-2 bg-red-100 rounded-lg">
@@ -781,7 +781,7 @@ export default function AdminStationsPage() {
 
       {/* Dialog de modification */}
       <Dialog open={editDialog.open} onOpenChange={(open: boolean) => !open && setEditDialog({ open: false, stations: null })}>
-        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
               <div className="p-2 bg-blue-100 rounded-lg">

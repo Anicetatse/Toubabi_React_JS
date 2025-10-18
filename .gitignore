@@ -22,6 +22,7 @@
 
 # assets
 /public/assets/annonces/
+/public/assets/Hoteliers/
 
 # debug
 npm-debug.log*

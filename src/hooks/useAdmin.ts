@@ -1516,3 +1516,59 @@ export function useDeleteIndustrie() {
   });
 }
 
+// ==================== HOOKS POUR LES HOTELIERS ====================
+
+export function useAdminHoteliers(page = 1, limit = 10, search = '') {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'hoteliers', page, limit, search],
+    queryFn: () => adminService.getHoteliers(page, limit, search),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreateHotelier() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => adminService.createHotelier(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'hoteliers'] });
+      toast.success('Hôtelier créé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdateHotelier() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => adminService.updateHotelier(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'hoteliers'] });
+      toast.success('Hôtelier modifié avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeleteHotelier() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deleteHotelier(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'hoteliers'] });
+      toast.success('Hôtelier supprimé avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression');
+    },
+  });
+}
