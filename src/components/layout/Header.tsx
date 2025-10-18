@@ -48,7 +48,7 @@ export function Header() {
       href: '#',
       dropdown: [
         { name: 'Les fondamentaux', href: '/tout-savoir' },
-        { name: 'Mobilité urbaine', href: '/services' },
+        { name: 'Mobilités urbaines', href: '/mobilites' },
       ]
     },
     { name: 'Biens disponibles', href: '/biens' },
