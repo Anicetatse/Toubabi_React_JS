@@ -27,7 +27,7 @@ const categories = [
   },
   {
     id: 'pharmacies',
-    titre: 'Pharmacies de Garde',
+    titre: 'Pharmacies (de Garde)',
     description: 'Localisez les pharmacies de garde près de chez vous',
     icon: Cross,
     color: 'from-green-500 to-emerald-500',
