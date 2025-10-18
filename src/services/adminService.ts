@@ -814,6 +814,33 @@ class AdminService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  // Méthodes pour la gestion des pharmacies
+  getPharmacies = async (page = 1, limit = 10, search = ''): Promise<any> => {
+    const response = await axios.get(`${API_URL}/api/admin/pharmacies`, {
+      params: { page, limit, search },
+      headers: this.getAuthHeaders(),
+    });
+    return response.data;
+  }
+
+  createPharmacie = async (data: any): Promise<void> => {
+    await axios.post(`${API_URL}/api/admin/pharmacies`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updatePharmacie = async (id: number, data: any): Promise<void> => {
+    await axios.put(`${API_URL}/api/admin/pharmacies/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deletePharmacie = async (id: number): Promise<void> => {
+    await axios.delete(`${API_URL}/api/admin/pharmacies/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
 }
 
 export const adminService = new AdminService();

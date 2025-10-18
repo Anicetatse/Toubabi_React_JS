@@ -95,11 +95,19 @@ export default function AdminEstimationsPage() {
   const [quartiers, setQuartiers] = useState<Quartier[]>([]);
   
   // Hooks React Query
-  const { data: estimationsData, isLoading } = useAdminEstimations(1, 1000, '');
-  const { data: referencesData } = usePrixReferences();
+  const { data: estimationsData, isLoading, error: estimationsError } = useAdminEstimations(1, 1000, '');
+  const { data: referencesData, error: referencesError } = usePrixReferences();
   const createMutation = useCreateEstimation();
   const updateMutation = useUpdateEstimation();
   const deleteMutation = useDeleteEstimation();
+
+  // Log des erreurs pour debug
+  if (estimationsError) {
+    console.error('Erreur chargement estimations:', estimationsError);
+  }
+  if (referencesError) {
+    console.error('Erreur chargement références:', referencesError);
+  }
   
   // États pour les dialogues
   const [createDialog, setCreateDialog] = useState({ open: false });
@@ -263,6 +271,25 @@ export default function AdminEstimationsPage() {
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
           <p className="ml-4 text-gray-600">Chargement des estimations...</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (estimationsError) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-600 font-semibold mb-2">Erreur de chargement</p>
+            <p className="text-gray-600 text-sm">Vérifiez la console pour plus de détails</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 bg-red-600 hover:bg-red-700"
+            >
+              Recharger
+            </Button>
+          </div>
         </div>
       </AdminLayout>
     );

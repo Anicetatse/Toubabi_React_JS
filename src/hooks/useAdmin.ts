@@ -1059,3 +1059,60 @@ export function useDeleteEstimation() {
     },
   });
 }
+
+// ==================== HOOKS POUR LES PHARMACIES ====================
+
+export function useAdminPharmacies(page = 1, limit = 10, search = '') {
+  const isAuthenticated = typeof window !== 'undefined' && !!localStorage.getItem('admin_token');
+  
+  return useQuery({
+    queryKey: ['admin', 'pharmacies', page, limit, search],
+    queryFn: () => adminService.getPharmacies(page, limit, search),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useCreatePharmacie() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => adminService.createPharmacie(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'pharmacies'] });
+      toast.success('Pharmacie créée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la création');
+    },
+  });
+}
+
+export function useUpdatePharmacie() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => adminService.updatePharmacie(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'pharmacies'] });
+      toast.success('Pharmacie modifiée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la modification');
+    },
+  });
+}
+
+export function useDeletePharmacie() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: number) => adminService.deletePharmacie(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'pharmacies'] });
+      toast.success('Pharmacie supprimée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression');
+    },
+  });
+}
