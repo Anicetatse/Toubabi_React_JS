@@ -30,7 +30,13 @@ export async function GET(request: NextRequest) {
       });
       
       if (!authResponse.ok) {
-        throw new Error('Erreur authentification Orange SMS');
+        const errorText = await authResponse.text();
+        console.error('Erreur API Orange SMS Auth:', {
+          status: authResponse.status,
+          statusText: authResponse.statusText,
+          body: errorText
+        });
+        throw new Error(`Erreur authentification Orange SMS (${authResponse.status}): ${errorText}`);
       }
       
       const authData = await authResponse.json();
@@ -43,7 +49,13 @@ export async function GET(request: NextRequest) {
       });
       
       if (!balanceResponse.ok) {
-        throw new Error('Erreur récupération solde SMS');
+        const errorText = await balanceResponse.text();
+        console.error('Erreur API Orange SMS Balance:', {
+          status: balanceResponse.status,
+          statusText: balanceResponse.statusText,
+          body: errorText
+        });
+        throw new Error(`Erreur récupération solde SMS (${balanceResponse.status}): ${errorText}`);
       }
       
       const balanceData = await balanceResponse.json();

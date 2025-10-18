@@ -126,31 +126,31 @@ export default function HomePage() {
         {selectedQuartier && (
           <div className="absolute bottom-4 left-4 right-4 z-10 md:left-8 md:right-auto md:w-96">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{selectedQuartier.nom}</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base sm:text-lg">{selectedQuartier.nom}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-sm">
+                <div className="space-y-2.5 sm:space-y-3">
+                  <div className="overflow-x-auto -mx-1">
+                    <table className="w-full border-collapse text-xs sm:text-sm">
                       <thead>
                         <tr className="bg-gray-100">
-                          <th className="border border-gray-300 p-2 text-left font-semibold">
+                          <th className="border border-gray-300 p-1.5 sm:p-2 text-left font-semibold text-[10px] sm:text-xs leading-tight">
                             Valeur Vénale * (FCFA)
                           </th>
-                          <th className="border border-gray-300 p-2 text-left font-semibold">
+                          <th className="border border-gray-300 p-1.5 sm:p-2 text-left font-semibold text-[10px] sm:text-xs leading-tight">
                             Valeur Marchande * (FCFA)
                           </th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr>
-                          <td className="border border-gray-300 p-3 text-blue-700 font-bold text-lg">
+                          <td className="border border-gray-300 p-1.5 sm:p-3 text-blue-700 font-bold text-xs sm:text-lg">
                             {selectedQuartier.prix_venal 
                               ? formatPrice(parseFloat(selectedQuartier.prix_venal)) 
                               : '-'}
                           </td>
-                          <td className="border border-gray-300 p-3 text-green-700 font-bold text-lg">
+                          <td className="border border-gray-300 p-1.5 sm:p-3 text-green-700 font-bold text-xs sm:text-lg">
                             {selectedQuartier.prix_marchand 
                               ? formatPrice(parseFloat(selectedQuartier.prix_marchand)) 
                               : '-'}
@@ -160,19 +160,19 @@ export default function HomePage() {
                     </table>
                   </div>
                   
-                  <div className="rounded-lg bg-gray-50 p-3 border-l-4 border-gray-400">
-                    <p className="text-sm font-semibold text-gray-700 mb-1">
+                  <div className="rounded-lg bg-gray-50 p-2.5 sm:p-3 border-l-4 border-gray-400">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-1">
                       Coût estimatif actualisé ** (FCFA)
                     </p>
-                    <p className="text-xl font-bold text-gray-600">
+                    <p className="text-base sm:text-xl font-bold text-gray-600">
                       {(() => {
                         const v = computeCoutEstimatif(selectedQuartier);
                         return v ? formatPrice(v) : '-';
                       })()}
                     </p>
                   </div>
-                  <div className="rounded-lg bg-amber-50 p-3">
-                    <p className="text-xs text-amber-900 mb-2">
+                  <div className="rounded-lg bg-amber-50 p-2.5 sm:p-3">
+                    <p className="text-[10px] sm:text-xs text-amber-900 leading-snug">
                       <strong>*Ces données sont des planchers indicatifs</strong> fournis par le Service
                       Cadastre de la Direction Générale des Impôts et peuvent ne pas
                       refléter la réalité du marché dans plusieurs zones géographiques. 
@@ -180,27 +180,27 @@ export default function HomePage() {
                     </p>
                   </div>
                   
-                  <div className="rounded-lg bg-blue-50 p-3">
-                    <p className="text-sm font-semibold text-blue-900 mb-2">NOUS CONTACTER</p>
-                    <div className="space-y-1 text-sm text-blue-800">
-                      <p className="flex items-center gap-2">
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="rounded-lg bg-blue-50 p-2.5 sm:p-3">
+                    <p className="text-xs sm:text-sm font-semibold text-blue-900 mb-1.5 sm:mb-2">NOUS CONTACTER</p>
+                    <div className="space-y-1 text-[10px] sm:text-sm text-blue-800">
+                      <p className="flex items-center gap-1.5 sm:gap-2">
+                        <svg className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
-                        contact@toubabi.com
+                        <span className="break-all">contact@toubabi.com</span>
                       </p>
-                      <p className="flex items-center gap-2">
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <p className="flex items-center gap-1.5 sm:gap-2">
+                        <svg className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
-                        +225 05 85 32 50 50
+                        <span>+225 05 85 32 50 50</span>
                       </p>
                     </div>
                   </div>
                   
                   <Button
                     variant="outline"
-                    className="w-full"
+                    className="w-full text-xs sm:text-sm py-2"
                     onClick={() => setSelectedQuartier(null)}
                   >
                     Fermer

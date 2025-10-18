@@ -342,24 +342,24 @@ export function MapDirect({ quartiers, onQuartierClick, selectedQuartier }: MapD
 
           
           const popupHTML = `
-            <div class="p-3 min-w-[280px]">
-              <h3 class="font-bold text-lg mb-3 text-blue-600">${quartier.nom}</h3>
-              <p class="text-xs font-semibold text-red-600 mt-1 mb-2">Index DGI (prix/m²)</p>
-              <div class="space-y-3 text-sm max-h-[220px] overflow-auto">
+            <div class="p-2 sm:p-3" style="min-width: 240px; max-width: 320px;">
+              <h3 class="font-bold text-base sm:text-lg mb-2 sm:mb-3 text-blue-600">${quartier.nom}</h3>
+              <p class="text-[10px] sm:text-xs font-semibold text-red-600 mt-1 mb-2">Index DGI (prix/m²)</p>
+              <div style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow: auto; font-size: 11px;">
                 <div>
-                  <table class="w-full border-collapse">
+                  <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
                     <thead>
-                      <tr class="bg-gray-100">
-                        <th class="border border-gray-300 p-2 text-left text-xs font-semibold">Valeur Vénale * (FCFA)</th>
-                        <th class="border border-gray-300 p-2 text-left text-xs font-semibold">Valeur Marchande * (FCFA)</th>
+                      <tr style="background-color: #f3f4f6;">
+                        <th style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: left; font-size: 9px; font-weight: 600; line-height: 1.2;">Valeur Vénale * (FCFA)</th>
+                        <th style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: left; font-size: 9px; font-weight: 600; line-height: 1.2;">Valeur Marchande * (FCFA)</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td class="border border-gray-300 p-2 text-blue-700 font-bold">
+                        <td style="border: 1px solid #d1d5db; padding: 6px; color: #1d4ed8; font-weight: bold; font-size: 11px;">
                           ${quartier.prix_venal ? formatPrice(quartier.prix_venal) : '-'}
                         </td>
-                        <td class="border border-gray-300 p-2 text-green-700 font-bold">
+                        <td style="border: 1px solid #d1d5db; padding: 6px; color: #15803d; font-weight: bold; font-size: 11px;">
                           ${quartier.prix_marchand ? formatPrice(quartier.prix_marchand) : '-'}
                         </td>
                       </tr>
@@ -367,15 +367,15 @@ export function MapDirect({ quartiers, onQuartierClick, selectedQuartier }: MapD
                   </table>
                 </div>
                 <div>
-                  <table class="w-full border-collapse">
+                  <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
                     <thead>
-                      <tr class="bg-gray-100">
-                        <th class="border border-gray-300 p-2 text-left text-xs font-semibold">Coût estimatif actualisé ** (FCFA)</th>
+                      <tr style="background-color: #f3f4f6;">
+                        <th style="border: 1px solid #d1d5db; padding: 4px 6px; text-align: left; font-size: 9px; font-weight: 600; line-height: 1.2;">Coût estimatif actualisé ** (FCFA)</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td class="border border-gray-300 p-2 text-purple-700 font-bold">
+                        <td style="border: 1px solid #d1d5db; padding: 6px; color: #7e22ce; font-weight: bold; font-size: 11px;">
                           ${quartier.prix_moyen ? formatPrice(quartier.prix_moyen) : '-'}
                         </td>
                       </tr>

@@ -307,14 +307,42 @@ export default function ModifierAnnoncePage() {
     return parseInt(formattedValue.replace(/[^\d]/g, ''), 10) || 0;
   };
 
-  const handleCategorieChange = (value: string) => {
-    setValue('categorie', value);
-    setValue('souscategorie', '');
-  };
-
   const handleCommuneChange = (value: number) => {
     setValue('commune', value);
     setValue('quartier', '' as any);
+  };
+
+  // Réinitialiser la sous-catégorie quand la catégorie change
+  useEffect(() => {
+    if (categorieId) {
+      setValue('souscategorie', '');
+    }
+  }, [categorieId, setValue]);
+
+  // Handlers pour les pièces et chambres
+  const handlePieceChange = (value: string) => {
+    setValue('piece', value);
+    const currentChambres = watch('chambre');
+    if (currentChambres && parseInt(currentChambres) > parseInt(value)) {
+      setValue('chambre', '');
+    }
+  };
+
+  const handleChambreChange = (value: string) => {
+    setValue('chambre', value);
+  };
+
+  const handleCaracteristiqueChange = (caracteristiqueId: number, checked: boolean) => {
+    const current = watch('caracteristiques') || [];
+    if (checked) {
+      setValue('caracteristiques', [...current, caracteristiqueId]);
+    } else {
+      setValue('caracteristiques', current.filter((id: number) => id !== caracteristiqueId));
+    }
+  };
+
+  const handleApprouveChange = (checked: boolean) => {
+    setValue('approuve', checked);
   };
 
   const validateStep = async (step: number): Promise<boolean> => {
@@ -414,20 +442,20 @@ export default function ModifierAnnoncePage() {
           <ClientTopBar />
 
           {/* Lien retour */}
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <Link 
               href="/mon-espace/annonces"
-              className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+              className="inline-flex items-center text-sm sm:text-base text-blue-600 hover:text-blue-700 font-medium"
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
               Retour à mes annonces
             </Link>
           </div>
 
           {/* En-tête */}
           <div className="text-center mb-4">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Modifier l'annonce</h1>
-            <p className="text-gray-600">Modifiez les informations de votre bien immobilier</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Modifier l'annonce</h1>
+            <p className="text-sm sm:text-base text-gray-600">Modifiez les informations de votre bien immobilier</p>
           </div>
 
           <div className="max-w-5xl mx-auto">
@@ -441,24 +469,24 @@ export default function ModifierAnnoncePage() {
               }}
             />
 
-            <form onSubmit={handleSubmit(onSubmit)} className="mt-8">
-              <div className="bg-white rounded-lg shadow-lg p-8">
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-6 sm:mt-8">
+              <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
                 
                 {/* Étape 1: Type de bien */}
                 {currentStep === 1 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     <div className="form-submit">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-6">Type de bien</h3>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Type de bien</h3>
                       <div className="submit-section">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-6">
                           {/* Type: Louer/Acheter */}
                           <Controller
                             name="type"
                             control={control}
                             render={({ field }) => (
-                              <div className="form-group col-span-2">
-                                <label className="block text-sm font-semibold text-gray-700 mb-4">Vous souhaitez *</label>
-                                <div className="grid grid-cols-2 gap-4">
+                              <div className="form-group">
+                                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-3 sm:mb-4">Vous souhaitez *</label>
+                                <div className="grid grid-cols-2 gap-2 sm:gap-4">
                                   <div>
                                     <input 
                                       type="radio" 
@@ -468,14 +496,14 @@ export default function ModifierAnnoncePage() {
                                       onChange={() => field.onChange('louer')}
                                       className="hidden"
                                     />
-                                    <label htmlFor="type-louer" className={`block w-full p-4 text-center rounded-lg border-2 cursor-pointer transition-all ${
+                                    <label htmlFor="type-louer" className={`block w-full p-2.5 sm:p-4 text-center rounded-lg border-2 cursor-pointer transition-all ${
                                       field.value === 'louer'
                                         ? 'bg-blue-600 border-blue-600 text-white shadow-lg'
                                         : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-blue-400'
                                     }`}>
-                                      <span className="text-lg font-semibold">Louer</span>
+                                      <span className="text-base sm:text-lg font-semibold">Louer</span>
                                       <br />
-                                      <span className="text-sm opacity-75">Mettre en location</span>
+                                      <span className="text-xs sm:text-sm opacity-75">Mettre en location</span>
                                     </label>
                                   </div>
                                   <div>
@@ -487,14 +515,14 @@ export default function ModifierAnnoncePage() {
                                       onChange={() => field.onChange('acheter')}
                                       className="hidden"
                                     />
-                                    <label htmlFor="type-acheter" className={`block w-full p-4 text-center rounded-lg border-2 cursor-pointer transition-all ${
+                                    <label htmlFor="type-acheter" className={`block w-full p-2.5 sm:p-4 text-center rounded-lg border-2 cursor-pointer transition-all ${
                                       field.value === 'acheter'
                                         ? 'bg-blue-600 border-blue-600 text-white shadow-lg'
                                         : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-blue-400'
                                     }`}>
-                                      <span className="text-lg font-semibold">Vendre</span>
+                                      <span className="text-base sm:text-lg font-semibold">Vendre</span>
                                       <br />
-                                      <span className="text-sm opacity-75">Vendre mon bien</span>
+                                      <span className="text-xs sm:text-sm opacity-75">Vendre mon bien</span>
                                     </label>
                                   </div>
                                 </div>
@@ -504,7 +532,7 @@ export default function ModifierAnnoncePage() {
 
                           {/* Catégorie */}
                           <div className="form-group">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Type de bien *</label>
+                            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Type de bien *</label>
                             <Controller
                               name="categorie"
                               control={control}
@@ -512,7 +540,7 @@ export default function ModifierAnnoncePage() {
                                 <select 
                                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                   value={field.value || ''}
-                                  onChange={(e) => handleCategorieChange(e.target.value)}
+                                  onChange={(e) => field.onChange(e.target.value)}
                                 >
                                   <option value="">Sélectionnez un type de bien</option>
                                   {categories.map((categorie: any) => (
@@ -524,13 +552,13 @@ export default function ModifierAnnoncePage() {
                               )}
                             />
                             {errors.categorie && (
-                              <p className="text-sm text-red-600 mt-1">{errors.categorie.message}</p>
+                              <p className="text-xs sm:text-sm text-red-600 mt-1">{errors.categorie.message}</p>
                             )}
                           </div>
 
                           {/* Sous-catégorie */}
                           <div className="form-group">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Sous Type de bien</label>
+                            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Sous Type de bien</label>
                             <Controller
                               name="souscategorie"
                               control={control}
@@ -576,47 +604,53 @@ export default function ModifierAnnoncePage() {
                                 />
                               )}
                             />
-                            {errors.prix && <p className="text-sm text-red-600 mt-1">{errors.prix.message}</p>}
+                            {errors.prix && <p className="text-xs sm:text-sm text-red-600 mt-1">{errors.prix.message}</p>}
                           </div>
                         </div>
 
                         {/* Meublé */}
                         {showMeubleField && (
-                          <div className="form-group col-md-6 mt-6" id="div_meuble">
-                            <ul className="no-ul-list third-row flex gap-4">
-                              <li>
-                                <input 
-                                  id="meuble-edit" 
-                                  value="1" 
-                                  className="checkbox-custom" 
-                                  name="meuble" 
-                                  type="radio"
-                                  checked={watch('meuble') === '1'}
-                                  onChange={() => setValue('meuble', '1')}
-                                />
-                                <label htmlFor="meuble-edit" className="checkbox-custom-label">Meublé</label>
-                              </li>
-                              <li>
-                                <input 
-                                  value="0" 
-                                  checked={watch('meuble') === '0'}
-                                  id="meuble2-edit" 
-                                  className="checkbox-custom" 
-                                  name="meuble" 
-                                  type="radio"
-                                  onChange={() => setValue('meuble', '0')}
-                                />
-                                <label htmlFor="meuble2-edit" className="checkbox-custom-label">Non meublé</label>
-                              </li>
-                            </ul>
+                          <div className="form-group mt-6" id="div_meuble">
+                            <Controller
+                              name="meuble"
+                              control={control}
+                              render={({ field }) => (
+                                <ul className="no-ul-list third-row flex gap-4">
+                                  <li>
+                                    <input 
+                                      id="meuble-edit" 
+                                      value="1" 
+                                      className="checkbox-custom" 
+                                      name="meuble" 
+                                      type="radio"
+                                      checked={field.value === '1'}
+                                      onChange={() => field.onChange('1')}
+                                    />
+                                    <label htmlFor="meuble-edit" className="checkbox-custom-label">Meublé</label>
+                                  </li>
+                                  <li>
+                                    <input 
+                                      value="0" 
+                                      checked={field.value === '0'}
+                                      id="meuble2-edit" 
+                                      className="checkbox-custom" 
+                                      name="meuble" 
+                                      type="radio"
+                                      onChange={() => field.onChange('0')}
+                                    />
+                                    <label htmlFor="meuble2-edit" className="checkbox-custom-label">Non meublé</label>
+                                  </li>
+                                </ul>
+                              )}
+                            />
                           </div>
                         )}
 
                         {/* Pièces et Chambres */}
                         {showPiecesChambres && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                          <div className="space-y-6 mt-6">
                             <div className="form-group" id="div_piece">
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre de pièce</label>
+                              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Nombre de pièce</label>
                               <div className="flex flex-wrap gap-2">
                                 {['1', '2', '3', '4', '5', '+5'].map((val, index) => (
                                   <article key={val} className="feature">
@@ -627,15 +661,7 @@ export default function ModifierAnnoncePage() {
                                       type="checkbox"
                                       id={`p-edit-${index + 1}`}
                                       checked={watch('piece') === String(index + 1)}
-                                      onChange={() => {
-                                        const selectedPieces = String(index + 1);
-                                        setValue('piece', selectedPieces);
-                                        
-                                        const currentChambres = watch('chambre');
-                                        if (currentChambres && parseInt(currentChambres) > parseInt(selectedPieces)) {
-                                          setValue('chambre', '');
-                                        }
-                                      }}
+                                      onChange={() => handlePieceChange(String(index + 1))}
                                     />
                                     <div>
                                       <span>{val}</span>
@@ -646,7 +672,7 @@ export default function ModifierAnnoncePage() {
                             </div>
 
                             <div className="form-group" id="div_chambre">
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre de chambre</label>
+                              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Nombre de chambre</label>
                               <div className="flex flex-wrap gap-2">
                                 {['1', '2', '3', '4', '5', '+5'].map((val, index) => {
                                   const currentPieces = watch('piece');
@@ -665,7 +691,7 @@ export default function ModifierAnnoncePage() {
                                         disabled={isDisabled}
                                         onChange={() => {
                                           if (!isDisabled) {
-                                            setValue('chambre', String(index + 1));
+                                            handleChambreChange(String(index + 1));
                                           }
                                         }}
                                       />
@@ -681,7 +707,7 @@ export default function ModifierAnnoncePage() {
                         )}
 
                         {/* Surface */}
-                        <div className="form-group col-md-6 mt-6">
+                        <div className="form-group mt-6">
                           <label>Surface en m²</label>
                           <input
                             type="number"
@@ -704,13 +730,13 @@ export default function ModifierAnnoncePage() {
 
                 {/* Étape 2: Localisation */}
                 {currentStep === 2 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     <div className="form-submit">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-6">Localisation</h3>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Localisation</h3>
                       <div className="submit-section">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="form-group">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Commune *</label>
+                            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Commune *</label>
                             <Controller
                               name="commune"
                               control={control}
@@ -728,12 +754,12 @@ export default function ModifierAnnoncePage() {
                               )}
                             />
                             {errors.commune && (
-                              <p className="text-sm text-red-600 mt-1">{errors.commune.message}</p>
+                              <p className="text-xs sm:text-sm text-red-600 mt-1">{errors.commune.message}</p>
                             )}
                           </div>
 
                           <div className="form-group">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Quartier *</label>
+                            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Quartier *</label>
                             <Controller
                               name="quartier"
                               control={control}
@@ -752,7 +778,7 @@ export default function ModifierAnnoncePage() {
                               )}
                             />
                             {errors.quartier && (
-                              <p className="text-sm text-red-600 mt-1">{errors.quartier.message}</p>
+                              <p className="text-xs sm:text-sm text-red-600 mt-1">{errors.quartier.message}</p>
                             )}
                           </div>
                         </div>
@@ -763,17 +789,17 @@ export default function ModifierAnnoncePage() {
 
                 {/* Étape 3: Photos */}
                 {currentStep === 3 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     <div className="form-submit">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-6">Photos</h3>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Photos</h3>
                       <div className="submit-section">
                         <div className="form-group">
-                          <label className="block text-sm font-semibold text-gray-700 mb-4">Photos de votre bien</label>
+                          <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-3 sm:mb-4">Photos de votre bien</label>
 
                           {/* Images existantes */}
                           {existingImages.length > 0 && (
-                            <div className="mb-6">
-                              <p className="text-sm text-gray-600 mb-3">Images actuelles ({existingImages.length})</p>
+                            <div className="mb-4 sm:mb-6">
+                              <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3">Images actuelles ({existingImages.length})</p>
                               <div className="modern-image-grid">
                                 {existingImages.map((imagePath, index) => (
                                   <div key={index} className="modern-image-card">
@@ -822,8 +848,8 @@ export default function ModifierAnnoncePage() {
 
                           {/* Nouvelles images */}
                           {imagePreview.length > 0 && (
-                            <div className="mt-6">
-                              <p className="text-sm text-gray-600 mb-3">Nouvelles images ({imagePreview.length})</p>
+                            <div className="mt-4 sm:mt-6">
+                              <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3">Nouvelles images ({imagePreview.length})</p>
                               <div className="modern-image-grid">
                                 {imagePreview.map((preview, index) => (
                                   <div key={index} className="modern-image-card">
@@ -842,7 +868,7 @@ export default function ModifierAnnoncePage() {
                             </div>
                           )}
 
-                          <p className="text-sm text-gray-600 mt-3">
+                          <p className="text-xs sm:text-sm text-gray-600 mt-2 sm:mt-3">
                             Total: {existingImages.length + selectedImages.length} / 8 photos
                           </p>
                         </div>
@@ -853,12 +879,12 @@ export default function ModifierAnnoncePage() {
 
                 {/* Étape 4: Description */}
                 {currentStep === 4 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     <div className="form-submit">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-6">Informations Détaillées</h3>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Informations Détaillées</h3>
                       <div className="submit-section">
                         <div className="form-group">
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Description *</label>
+                          <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Description *</label>
                           <Textarea
                             placeholder="Décrivez votre bien en détail..."
                             rows={6}
@@ -866,13 +892,13 @@ export default function ModifierAnnoncePage() {
                             {...register('description')}
                           />
                           {errors.description && (
-                            <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>
+                            <p className="text-xs sm:text-sm text-red-600 mt-1">{errors.description.message}</p>
                           )}
                         </div>
 
                         {/* Caractéristiques */}
                         <div className="form-group col-md-12 mt-6">
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">
                             Autres caractéristiques (optionnelle)
                           </label>
                           <div className="o-features">
@@ -890,14 +916,7 @@ export default function ModifierAnnoncePage() {
                                       type="checkbox" 
                                       value={caracteristique.id}
                                       checked={(watch('caracteristiques') || []).includes(caracteristique.id)}
-                                      onChange={(e) => {
-                                        const current = watch('caracteristiques') || [];
-                                        if (e.target.checked) {
-                                          setValue('caracteristiques', [...current, caracteristique.id]);
-                                        } else {
-                                          setValue('caracteristiques', current.filter((id: number) => id !== caracteristique.id));
-                                        }
-                                      }}
+                                      onChange={(e) => handleCaracteristiqueChange(caracteristique.id, e.target.checked)}
                                     />
                                     <label htmlFor={`caract-edit-${caracteristique.id}`} className="checkbox-custom-label">
                                       {caracteristique.nom}
@@ -915,33 +934,39 @@ export default function ModifierAnnoncePage() {
 
                 {/* Étape 5: Confirmation */}
                 {currentStep === 5 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     <div className="form-submit text-center">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-2">Confirmation</h3>
-                      <p className="text-gray-600 mb-6">
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Confirmation</h3>
+                      <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                         Vérifiez les informations avant de soumettre les modifications
                       </p>
                       <div className="submit-section">
-                        <div className="form-group mb-6">
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Accord RGPD *</label>
-                          <ul className="no-ul-list">
-                            <li>
-                              <input 
-                                required 
-                                id="aj-edit-1" 
-                                value="1" 
-                                className="checkbox-custom" 
-                                name="approuve" 
-                                type="checkbox"
-                                checked={watch('approuve')}
-                                onChange={(e) => setValue('approuve', e.target.checked)}
-                              />
-                              <label htmlFor="aj-edit-1" className="checkbox-custom-label">
-                                Je confirme les modifications apportées à mon annonce
-                              </label>
-                              {errors.approuve && <p className="text-sm text-red-600 mt-1">{errors.approuve.message}</p>}
-                            </li>
-                          </ul>
+                        <div className="form-group mb-4 sm:mb-6">
+                          <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Accord RGPD *</label>
+                          <Controller
+                            name="approuve"
+                            control={control}
+                            render={({ field }) => (
+                              <ul className="no-ul-list">
+                                <li>
+                                  <input 
+                                    required 
+                                    id="aj-edit-1" 
+                                    value="1" 
+                                    className="checkbox-custom" 
+                                    name="approuve" 
+                                    type="checkbox"
+                                    checked={field.value}
+                                    onChange={(e) => field.onChange(e.target.checked)}
+                                  />
+                                  <label htmlFor="aj-edit-1" className="checkbox-custom-label">
+                                    Je confirme les modifications apportées à mon annonce
+                                  </label>
+                                  {errors.approuve && <p className="text-xs sm:text-sm text-red-600 mt-1">{errors.approuve.message}</p>}
+                                </li>
+                              </ul>
+                            )}
+                          />
                         </div>
                       </div>
                     </div>
@@ -949,7 +974,7 @@ export default function ModifierAnnoncePage() {
                 )}
 
                 {/* Boutons de navigation */}
-                <div className="flex justify-between items-center mt-8 pt-6 border-t">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t">
                   <Button
                     type="button"
                     variant="outline"
@@ -958,12 +983,12 @@ export default function ModifierAnnoncePage() {
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     disabled={currentStep === 1}
-                    className="px-6"
+                    className="px-4 sm:px-6 text-xs sm:text-sm w-full sm:w-auto order-1 sm:order-none"
                   >
                     ← Précédent
                   </Button>
 
-                  <div className="text-sm text-gray-500">
+                  <div className="text-xs sm:text-sm text-gray-500 order-3 sm:order-none">
                     Étape {currentStep} sur {steps.length}
                   </div>
 
@@ -971,7 +996,7 @@ export default function ModifierAnnoncePage() {
                     <Button
                       type="button"
                       onClick={handleNextStep}
-                      className="px-6"
+                      className="px-4 sm:px-6 text-xs sm:text-sm w-full sm:w-auto order-2 sm:order-none"
                     >
                       Suivant →
                     </Button>
@@ -979,11 +1004,11 @@ export default function ModifierAnnoncePage() {
                     <Button
                       type="submit"
                       disabled={updateAnnonceMutation.isPending}
-                      className="px-8 bg-blue-600 hover:bg-blue-700 text-white"
+                      className="px-4 sm:px-8 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm w-full sm:w-auto order-2 sm:order-none"
                     >
                       {updateAnnonceMutation.isPending ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                           Mise à jour...
                         </>
                       ) : (

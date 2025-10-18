@@ -364,11 +364,11 @@ export default function BienDetailPage() {
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />);
+        stars.push(<Star key={i} className="w-4 h-4 sm:w-5 sm:h-5 fill-yellow-400 text-yellow-400" />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" style={{ clipPath: 'inset(0 50% 0 0)' }} />);
+        stars.push(<Star key={i} className="w-4 h-4 sm:w-5 sm:h-5 fill-yellow-400 text-yellow-400" style={{ clipPath: 'inset(0 50% 0 0)' }} />);
       } else {
-        stars.push(<Star key={i} className="w-5 h-5 text-gray-300" />);
+        stars.push(<Star key={i} className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />);
       }
     }
 
@@ -637,24 +637,24 @@ export default function BienDetailPage() {
             {/* Rating & Comments Section */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               {/* Header avec note moyenne */}
-              <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 p-8 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-3xl font-bold mb-2">Avis et commentaires</h2>
-                    <p className="text-blue-100">Note de l'annonceur basée sur {bien.totalComments} avis</p>
+              <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 p-4 sm:p-8 text-white">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0">
+                  <div className="text-center sm:text-left">
+                    <h2 className="text-2xl sm:text-3xl font-bold mb-2">Avis et commentaires</h2>
+                    <p className="text-blue-100 text-sm sm:text-base">Note de l'annonceur basée sur {bien.totalComments} avis</p>
                   </div>
                   
                   {/* Note moyenne en grand cercle */}
                   <div className="flex flex-col items-center">
                     <div className="relative">
-                      <div className="w-32 h-32 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/30 shadow-2xl">
+                      <div className="w-24 h-24 sm:w-32 sm:h-32 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/30 shadow-2xl">
                         <div className="text-center">
-                          <div className="text-5xl font-black">{bien.averageNote}</div>
-                          <div className="text-sm opacity-90">/ 5.0</div>
+                          <div className="text-4xl sm:text-5xl font-black">{bien.averageNote}</div>
+                          <div className="text-xs sm:text-sm opacity-90">/ 5.0</div>
                         </div>
                       </div>
                       {/* Effet de brillance */}
-                      <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-300 rounded-full animate-pulse"></div>
+                      <div className="absolute -top-2 -right-2 w-6 h-6 sm:w-8 sm:h-8 bg-yellow-300 rounded-full animate-pulse"></div>
                     </div>
                     <div className="flex gap-1 mt-3">
                       {renderStars(parseFloat(bien.averageNote.toString()))}
@@ -663,14 +663,14 @@ export default function BienDetailPage() {
                 </div>
               </div>
 
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
 
               {/* Comment Form */}
-              <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-100">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">Laisser un commentaire</h3>
-                <p className="text-sm text-gray-600 mb-6">Partagez votre expérience avec cet annonceur</p>
+              <div className="mb-6 sm:mb-8 p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-100">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">Laisser un commentaire</h3>
+                <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">Partagez votre expérience avec cet annonceur</p>
                 
-                <form onSubmit={handleCommentSubmit} className="space-y-5">
+                <form onSubmit={handleCommentSubmit} className="space-y-4 sm:space-y-5">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Nom ou pseudonyme *</label>
                     <input
@@ -679,7 +679,7 @@ export default function BienDetailPage() {
                       value={commentForm.nom}
                       onChange={(e) => setCommentForm({ ...commentForm, nom: e.target.value })}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base"
                     />
                   </div>
 
@@ -691,15 +691,15 @@ export default function BienDetailPage() {
                       onChange={(e) => setCommentForm({ ...commentForm, commentaire: e.target.value })}
                       required
                       rows={4}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none text-sm sm:text-base"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">Votre note *</label>
-                    <div className="flex items-center gap-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
                       {/* Étoiles interactives */}
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5 sm:gap-2 justify-center sm:justify-start">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <button
                             key={star}
@@ -707,10 +707,10 @@ export default function BienDetailPage() {
                             onClick={() => setCommentForm({ ...commentForm, note: star })}
                             onMouseEnter={() => setHoveredStar(star)}
                             onMouseLeave={() => setHoveredStar(0)}
-                            className="transition-all duration-200 transform hover:scale-125 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 rounded"
+                            className="transition-all duration-200 transform hover:scale-110 sm:hover:scale-125 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 rounded"
                           >
                             <Star
-                              className={`w-10 h-10 transition-all ${
+                              className={`w-8 h-8 sm:w-10 sm:h-10 transition-all ${
                                 star <= (hoveredStar || commentForm.note)
                                   ? 'fill-yellow-400 text-yellow-400 drop-shadow-lg'
                                   : 'text-gray-300 hover:text-gray-400'
@@ -721,12 +721,12 @@ export default function BienDetailPage() {
                       </div>
                       
                       {/* Label de la note */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-3xl font-bold text-yellow-600">
+                      <div className="flex items-center gap-2 justify-center sm:justify-start">
+                        <span className="text-2xl sm:text-3xl font-bold text-yellow-600">
                           {hoveredStar || commentForm.note}
                         </span>
                         <div className="text-left">
-                          <div className="text-sm text-gray-500">/ 5</div>
+                          <div className="text-xs sm:text-sm text-gray-500">/ 5</div>
                           <div className="text-xs font-semibold text-gray-700">
                             {(hoveredStar || commentForm.note) === 5 ? '🎉 Excellent' :
                              (hoveredStar || commentForm.note) === 4 ? '😊 Très bien' :
@@ -742,9 +742,9 @@ export default function BienDetailPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold text-lg"
+                    className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold text-base sm:text-lg"
                   >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                     {submitting ? 'Envoi en cours...' : 'Publier mon avis'}
                   </button>
                 </form>
@@ -752,16 +752,16 @@ export default function BienDetailPage() {
 
 
               {/* Comments List */}
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-2xl font-bold text-gray-900">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex items-center justify-between px-2 sm:px-0">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
                     {bien.totalComments === 0 ? 'Aucun avis' : `${bien.totalComments} ${bien.totalComments > 1 ? 'Avis' : 'Avis'}`}
                   </h3>
                 </div>
                 
                 {bien.commentaires.length > 0 ? (
                   <>
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       {(showAllComments ? bien.commentaires : bien.commentaires.slice(0, 3)).map((comment, index) => {
                         const isExpanded = expandedComments.has(comment.id);
                         const commentText = comment.commentaire;
@@ -769,12 +769,12 @@ export default function BienDetailPage() {
                         const displayText = isExpanded || !isLongComment ? commentText : truncateText(commentText, 200);
 
                         return (
-                          <div key={comment.id} className="group relative bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
+                          <div key={comment.id} className="group relative bg-gradient-to-br from-gray-50 to-white p-3 sm:p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
                             {/* Avatar et infos */}
-                            <div className="flex items-start gap-3 mb-3">
+                            <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
                               {/* Avatar avec initiale */}
                               <div className="flex-shrink-0">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-base shadow-md ${
+                                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-md ${
                                   index % 5 === 0 ? 'bg-gradient-to-br from-blue-500 to-blue-600' :
                                   index % 5 === 1 ? 'bg-gradient-to-br from-purple-500 to-purple-600' :
                                   index % 5 === 2 ? 'bg-gradient-to-br from-pink-500 to-pink-600' :
@@ -786,36 +786,36 @@ export default function BienDetailPage() {
                               </div>
                               
                               {/* Nom et date */}
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <h4 className="font-bold text-base text-gray-900">{comment.nom}</h4>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+                                  <h4 className="font-bold text-sm sm:text-base text-gray-900 truncate">{comment.nom}</h4>
                                   {/* Badge vérifié (optionnel) */}
-                                  <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                                  <span className="px-1.5 sm:px-2 py-0.5 bg-green-100 text-green-700 text-[10px] sm:text-xs font-semibold rounded-full whitespace-nowrap">
                                     ✓ Vérifié
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <div className="text-xs text-gray-500">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                  <div className="text-[10px] sm:text-xs text-gray-500">
                                     {formatDateTime(comment.created_at)}
                                   </div>
                                   {/* Note sous forme de badge */}
-                                  <div className="flex items-center gap-1 px-2 py-0.5 bg-yellow-50 rounded-full">
-                                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                    <span className="text-xs font-bold text-yellow-700">{comment.note}.0</span>
+                                  <div className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 bg-yellow-50 rounded-full">
+                                    <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-yellow-400 text-yellow-400" />
+                                    <span className="text-[10px] sm:text-xs font-bold text-yellow-700">{comment.note}.0</span>
                                   </div>
                                 </div>
                               </div>
                             </div>
                             
                             {/* Commentaire */}
-                            <div className="pl-[52px]">
-                              <p className="text-gray-700 leading-relaxed text-sm">{displayText}</p>
+                            <div className="pl-11 sm:pl-[52px]">
+                              <p className="text-gray-700 leading-relaxed text-xs sm:text-sm">{displayText}</p>
                               
                               {/* Bouton Lire plus / Lire moins */}
                               {isLongComment && (
                                 <button
                                   onClick={() => toggleCommentExpansion(comment.id)}
-                                  className="mt-2 flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-xs transition-colors"
+                                  className="mt-1.5 sm:mt-2 flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-[10px] sm:text-xs transition-colors"
                                 >
                                   {isExpanded ? (
                                     <>
@@ -833,7 +833,7 @@ export default function BienDetailPage() {
                             </div>
                             
                             {/* Décoration */}
-                            <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-50 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="absolute top-0 right-0 w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-50 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
                           </div>
                         );
                       })}
@@ -841,19 +841,19 @@ export default function BienDetailPage() {
 
                     {/* Bouton Voir plus / Voir moins de commentaires */}
                     {bien.commentaires.length > 3 && (
-                      <div className="flex justify-center pt-4">
+                      <div className="flex justify-center pt-2 sm:pt-4">
                         <button
                           onClick={() => setShowAllComments(!showAllComments)}
-                          className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl font-semibold"
+                          className="flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl font-semibold text-sm sm:text-base"
                         >
                           {showAllComments ? (
                             <>
-                              <ChevronUp className="w-5 h-5" />
+                              <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
                               Voir moins d'avis
                             </>
                           ) : (
                             <>
-                              <ChevronDown className="w-5 h-5" />
+                              <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" />
                               Voir tous les avis ({bien.commentaires.length})
                             </>
                           )}
@@ -862,12 +862,12 @@ export default function BienDetailPage() {
                     )}
                   </>
                 ) : (
-                  <div className="text-center py-12">
-                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <MessageCircle className="w-10 h-10 text-gray-400" />
+                  <div className="text-center py-8 sm:py-12">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                      <MessageCircle className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
                     </div>
-                    <p className="text-gray-500 text-lg font-medium">Aucun commentaire pour le moment</p>
-                    <p className="text-gray-400 text-sm mt-2">Soyez le premier à laisser un avis !</p>
+                    <p className="text-gray-500 text-base sm:text-lg font-medium">Aucun commentaire pour le moment</p>
+                    <p className="text-gray-400 text-xs sm:text-sm mt-2">Soyez le premier à laisser un avis !</p>
                   </div>
                 )}
               </div>

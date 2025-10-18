@@ -307,10 +307,11 @@ npx prisma studio # Interface BDD (optionnel)
 
 ## 📄 Licence
 
-Ce projet est sous licence privée - © 2024 Toubabi
+Ce projet est sous licence privée - © 2025 Toubabi
 
 ---
 
 **Développé avec ❤️ en Côte d'Ivoire**
 
 *Réplique React/Next.js du projet PHP Laravel original*
+npm run dev -- -p 4001
